@@ -2,7 +2,9 @@
 
 # Gemini 3 Pro Image MCP Server 🎨
 
-> Professional MCP server for Google's Gemini 3 Pro Image - state-of-the-art image generation with advanced reasoning, high-resolution output, and Google Search grounding.
+> Professional MCP server exclusively for Google's **Gemini 3 Pro Image Preview** (aka "Nano Banana Pro") - state-of-the-art image generation with advanced reasoning, high-resolution output (1K-4K), up to 14 reference images, Google Search grounding, and automatic thinking mode.
+
+**✨ All generated images include invisible SynthID watermarks for authenticity and provenance tracking.**
 
 ## ✨ Features
 
@@ -263,16 +265,19 @@ Add to Cursor's MCP configuration (`.cursor/mcp.json`):
 
 **Note**: Images are automatically saved to `~/gemini_images`. Optionally add `"OUTPUT_DIR": "/your/custom/path"` to customize.
 
-## 🎯 Available Models
+## 🎯 Supported Model
 
-### Gemini 3 Pro Image
-- **gemini-3-pro-image-preview** (default): State-of-the-art image generation optimized for professional asset production with:
-  - Built-in 1K, 2K, and 4K resolution support
-  - Advanced text rendering capabilities
-  - Up to 14 reference images for consistency
-  - Google Search grounding for real-time data
-  - Thinking mode with reasoning process
-  - Support for both TEXT and IMAGE response modalities
+This MCP server exclusively supports:
+
+### Gemini 3 Pro Image Preview (gemini-3-pro-image-preview)
+The **only** model supported - Google's state-of-the-art image generation model (aka "Nano Banana Pro") optimized for professional asset production with:
+  - **Built-in 1K, 2K, and 4K resolution support** (must use uppercase 'K')
+  - **Advanced text rendering capabilities** for infographics, menus, diagrams, logos
+  - **Up to 14 reference images** (max 6 objects + max 5 humans) for style/character consistency
+  - **Google Search grounding** for real-time data (weather, stocks, events, maps)
+  - **Thinking mode with reasoning process** (automatic, cannot be disabled)
+  - **Support for both TEXT and IMAGE response modalities**
+  - **SynthID watermarking** automatically applied to all generated images
 
 ## 🛠️ Tools
 
@@ -282,16 +287,28 @@ Generate professional images using Gemini 3 Pro Image with advanced features.
 
 **Parameters:**
 - `prompt` (required): Text description of the image to generate
-- `model`: Model to use (default: gemini-3-pro-image-preview)
-- `enhance_prompt`: Automatically enhance prompt using AI (default: true)
-- `aspect_ratio`: Aspect ratio like 1:1, 16:9, 9:16, 3:2, 4:5, etc. (default: 1:1)
-- `image_size`: Resolution: 1K, 2K, or 4K (default: 1K)
-- `output_format`: Image format: png, jpeg, webp (default: png)
+  - **Best Practice**: Use descriptive paragraphs, not keyword lists. "Describe the scene, don't just list keywords"
+- `model`: Model to use (default: gemini-3-pro-image-preview - the only supported model)
+- `enhance_prompt`: Automatically enhance prompt using Gemini Flash (default: true)
+  - Transforms simple prompts into detailed, cinematic descriptions
+- `aspect_ratio`: Image proportions (default: 1:1)
+  - Options: "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
+- `image_size`: Resolution (default: 2K)
+  - **CRITICAL**: Must use uppercase 'K': "1K", "2K", or "4K" (lowercase like "2k" will be rejected!)
+  - "1K" - Fast testing (1120 tokens, ~1-2MB)
+  - "2K" - Recommended for most use cases (1120 tokens, ~3-5MB)
+  - "4K" - Maximum quality for production (2000 tokens, ~8-15MB)
+- `output_format`: Image file format (default: png)
+  - Options: "png" (recommended), "jpeg", "webp"
 - `reference_image_paths`: List of paths to reference images (up to 14 total)
-  - Maximum 6 object images for high-fidelity inclusion
-  - Maximum 5 human images for character consistency
+  - Maximum 6 object images for high-fidelity inclusion of products/items
+  - Maximum 5 human images for character/person consistency
+  - Use for: character consistency, style transfer, object inclusion, multi-person compositions
 - `enable_google_search`: Enable Google Search grounding for real-time data (default: false)
-- `response_modalities`: Response types like ["TEXT", "IMAGE"] (default: both)
+  - Use for: current events, weather forecasts, stock data, recent news, real-time maps
+  - Adds 1-3 seconds latency and includes grounding_metadata in response
+- `response_modalities`: Response types (default: ["TEXT", "IMAGE"])
+  - Options: ["TEXT", "IMAGE"], ["IMAGE"], ["TEXT"]
 
 **Examples:**
 ```
@@ -430,16 +447,17 @@ View current server configuration.
 
 | Feature | Support | Details |
 |---------|---------|---------|
-| Resolution Options | ✅ 1K, 2K, 4K | Built-in high-resolution generation |
+| Resolution Options | ✅ 1K, 2K, 4K | Built-in high-resolution generation (MUST use uppercase 'K') |
 | Reference Images | ✅ Up to 14 | 6 objects + 5 humans for consistency |
 | Google Search Grounding | ✅ Real-time data | Weather, stocks, events, maps |
-| Thinking Mode | ✅ Advanced reasoning | Visible thought process and interim images |
-| Text Rendering | ✅ Advanced | Legible text in infographics, menus, diagrams |
+| Thinking Mode | ✅ Advanced reasoning | Automatic (cannot be disabled), generates up to 2 interim images |
+| Text Rendering | ✅ Advanced | Legible text in infographics, menus, diagrams, logos |
 | Aspect Ratios | ✅ 10 options | Full flexibility for any format |
 | Response Modalities | ✅ TEXT + IMAGE | Dual output modes |
-| Prompt Enhancement | ✅ Built-in | AI-powered optimization |
-| Thought Signatures | ✅ Automatic | Preserved across multi-turn interactions |
-| Best For | Professional assets, marketing, real-time visualization |
+| Prompt Enhancement | ✅ Built-in | AI-powered optimization using Gemini Flash |
+| SynthID Watermarking | ✅ Automatic | Invisible watermark on all generated images |
+| Thought Signatures | ✅ Automatic | Preserved across multi-turn interactions (handled by SDK) |
+| Best For | Professional assets, marketing, real-time visualization, logos, infographics |
 
 ## 🐛 Troubleshooting
 

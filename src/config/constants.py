@@ -1,21 +1,26 @@
 """
 Constants and model definitions for Gemini 3 Pro Image API.
+
+This MCP server exclusively supports Gemini 3 Pro Image Preview (aka "Nano Banana Pro"),
+Google's state-of-the-art image generation model optimized for professional asset
+production with advanced reasoning capabilities.
 """
 
 from pathlib import Path
 
 # Gemini Models (using official Google GenAI SDK)
+# NOTE: This server ONLY supports Gemini 3 Pro Image Preview for image generation
 GEMINI_MODELS = {
-    "gemini-3-pro-image-preview": "gemini-3-pro-image-preview",
-    "gemini-flash-latest": "gemini-flash-latest",  # For prompt enhancement (non-image)
+    "gemini-3-pro-image-preview": "gemini-3-pro-image-preview",  # Primary image model
+    "gemini-flash-latest": "gemini-flash-latest",  # For prompt enhancement only (non-image)
 }
 
 # All available models
 ALL_MODELS = GEMINI_MODELS
 
 # Default models
-DEFAULT_MODEL = "gemini-3-pro-image-preview"
-DEFAULT_ENHANCEMENT_MODEL = "gemini-flash-latest"
+DEFAULT_MODEL = "gemini-3-pro-image-preview"  # The only supported image generation model
+DEFAULT_ENHANCEMENT_MODEL = "gemini-flash-latest"  # Used only for prompt enhancement
 
 # Aspect ratios
 ASPECT_RATIOS = [
@@ -40,6 +45,7 @@ IMAGE_FORMATS = {
 }
 
 # Image sizes (Gemini 3 Pro Image)
+# CRITICAL: Must use uppercase 'K' (e.g., "2K" not "2k") - lowercase will be rejected by API
 IMAGE_SIZES = ["1K", "2K", "4K"]
 DEFAULT_IMAGE_SIZE = "2K"
 
