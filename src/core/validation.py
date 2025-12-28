@@ -10,6 +10,7 @@ from ..config.constants import (
     ALL_MODELS,
     ASPECT_RATIOS,
     IMAGE_FORMATS,
+    IMAGE_SIZES,
     MAX_PROMPT_LENGTH,
 )
 from .exceptions import ValidationError
@@ -115,3 +116,20 @@ def validate_batch_size(size: int, max_size: int) -> None:
 
     if size > max_size:
         raise ValidationError(f"Batch size exceeds maximum: {size} > {max_size}")
+
+
+def validate_image_size(size: str) -> str:
+    """
+    Validate and normalize image size parameter for Gemini 3 Pro Image.
+
+    CRITICAL: The API requires uppercase 'K' (e.g., "2K" not "2k").
+    This function automatically converts valid lowercase inputs to the required format.
+    """
+    normalized_size = size.upper()
+    if normalized_size not in IMAGE_SIZES:
+        available = ", ".join(IMAGE_SIZES)
+        raise ValidationError(
+            f"Invalid image size '{size}'. Must be one of: {available}. "
+            f"Note: The API requires an uppercase 'K'."
+        )
+    return normalized_size
