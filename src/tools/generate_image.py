@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 async def generate_image_tool(
     prompt: str,
     model: str | None = None,
-    enhance_prompt: bool = True,
+    enhance_prompt: bool = False,
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
@@ -48,7 +48,7 @@ async def generate_image_tool(
     Args:
         prompt: Text description for image generation
         model: Model to use (default: gemini-3-pro-image-preview)
-        enhance_prompt: Automatically enhance prompt for better results
+        enhance_prompt: Automatically enhance prompt for better results (default: False)
         aspect_ratio: Image aspect ratio (1:1, 16:9, 9:16, etc.)
         image_size: Image resolution: 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
@@ -165,7 +165,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
     async def generate_image(
         prompt: str,
         model: str | None = None,
-        enhance_prompt: bool = True,
+        enhance_prompt: bool = False,
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
@@ -220,17 +220,27 @@ def register_generate_image_tool(mcp_server: Any) -> None:
           Model to use. Currently only "gemini-3-pro-image-preview" is supported.
           This is the default and recommended model for all image generation tasks.
 
-        ► enhance_prompt (optional, bool, default: True):
+        ► enhance_prompt (optional, bool, default: False):
           Automatically enhance your prompt using Gemini Flash for superior results.
 
-          WHEN TO USE:
-          • True (recommended): For quick iterations and automatic optimization
-          • False: When you have carefully crafted prompts or need exact control
+          ⚠️ ENHANCEMENT IS OFF BY DEFAULT to preserve user intent.
+
+          WHEN TO ENABLE (set to True):
+          • User explicitly requests prompt enhancement
+          • Your prompt is too simple/vague (e.g., "a cat" or "sunset")
+          • User wants more creative/detailed interpretation
+
+          DO NOT ENABLE FOR:
+          • Well-detailed prompts with specific requirements
+          • Technical/precise image requests (diagrams, infographics, UI mockups)
+          • When user wants exact control over composition
 
           What it does: Transforms simple prompts into detailed, cinematic descriptions.
           Example: "cat in space helmet" → "A photorealistic portrait of a domestic
           tabby cat wearing a futuristic space helmet, close-up composition, warm
           studio lighting, detailed fur texture, reflective visor..."
+
+          NOTE: Enhancement adds 2-5 seconds latency and uses Gemini Flash.
 
         ► aspect_ratio (optional, str, default: "1:1"):
           Image proportions. Choose based on your use case.
@@ -403,7 +413,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
             }
           ],
           "metadata": {
-            "enhance_prompt": true,
+            "enhance_prompt": false,
             "aspect_ratio": "16:9",
             "thoughts": [...],  // if thinking mode generated interim images
             "grounding_metadata": {...}  // if Google Search was enabled
