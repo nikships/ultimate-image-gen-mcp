@@ -76,7 +76,7 @@ class APIConfig(BaseSettings):
 
     # Feature flags
     enable_prompt_enhancement: bool = Field(
-        default=True, description="Enable automatic prompt enhancement"
+        default=False, description="Enable automatic prompt enhancement"
     )
     enable_batch_processing: bool = Field(default=True, description="Enable batch processing")
 

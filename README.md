@@ -34,7 +34,7 @@
 
 ### Key Features in Action
 
-All images can be generated with **4K resolution** and **AI prompt enhancement enabled**.
+All images can be generated with **4K resolution** and **optional AI prompt enhancement**.
 
 ### Example Use Cases
 
@@ -80,7 +80,7 @@ Generate infographics, menus, or diagrams with legible text:
 
 ## 🎨 Prompt Enhancement Showcase
 
-See the power of AI prompt enhancement! Simple prompts are automatically transformed into detailed, cinematic descriptions:
+See the power of AI prompt enhancement! When enabled, simple prompts can be transformed into detailed, cinematic descriptions:
 
 **Original:** "A fierce wolf wearing the black symbiote Spider-Man suit, web-slinging through city at night"
 
@@ -112,7 +112,7 @@ See the power of AI prompt enhancement! Simple prompts are automatically transfo
 
 ![Fox in Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/fox_classic.png)
 
-All images generated with `enhance_prompt: true`, showcasing how simple descriptions become photorealistic, cinematic masterpieces with dramatic lighting, detailed textures, and professional composition.
+All images generated with `enhance_prompt: true`, showcasing how simple descriptions can become photorealistic, cinematic masterpieces with dramatic lighting, detailed textures, and professional composition when enhancement is enabled.
 
 ## 📸 Photorealistic Capabilities
 
@@ -283,7 +283,7 @@ Generate professional images using Gemini 3 Pro Image with advanced features.
 **Parameters:**
 - `prompt` (required): Text description of the image to generate
 - `model`: Model to use (default: gemini-3-pro-image-preview)
-- `enhance_prompt`: Automatically enhance prompt using AI (default: true)
+- `enhance_prompt`: Automatically enhance prompt using AI (default: false) - Enable for simple/vague prompts
 - `aspect_ratio`: Aspect ratio like 1:1, 16:9, 9:16, 3:2, 4:5, etc. (default: 1:1)
 - `image_size`: Resolution: 1K, 2K, or 4K (default: 1K)
 - `output_format`: Image format: png, jpeg, webp (default: png)
@@ -316,7 +316,7 @@ Process multiple prompts efficiently with parallel batch processing.
 **Parameters:**
 - `prompts` (required): List of text prompts
 - `model`: Model to use for all images
-- `enhance_prompt`: Enhance all prompts (default: true)
+- `enhance_prompt`: Enhance all prompts (default: false) - Enable for simple/vague prompts
 - `aspect_ratio`: Aspect ratio for all images
 - `batch_size`: Parallel processing size (default: from config)
 
@@ -332,7 +332,7 @@ Batch generate images for these prompts:
 
 ### AI Prompt Enhancement
 
-When enabled (default), the server uses Gemini Flash to automatically enhance your prompts:
+When enabled, the server uses Gemini Flash to automatically enhance your prompts:
 
 **Original:** `a cat wearing a space helmet`
 
@@ -383,7 +383,7 @@ with image_size: "4K" and aspect_ratio: "1:1"
 |----------|-------------|---------|
 | `GEMINI_API_KEY` | Google Gemini API key (required) | - |
 | `OUTPUT_DIR` | Directory for generated images | `~/gemini_images` |
-| `ENABLE_PROMPT_ENHANCEMENT` | Enable AI prompt enhancement | `true` |
+| `ENABLE_PROMPT_ENHANCEMENT` | Enable AI prompt enhancement | `false` |
 | `ENABLE_BATCH_PROCESSING` | Enable batch processing | `true` |
 | `DEFAULT_MODEL` | Default model | `gemini-3-pro-image-preview` |
 | `DEFAULT_IMAGE_SIZE` | Default resolution | `2K` |

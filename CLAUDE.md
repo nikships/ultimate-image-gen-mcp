@@ -400,7 +400,7 @@ except Exception as e:
 
 ## Performance Characteristics
 
-- **Prompt Enhancement:** Adds 2-5 seconds latency (optional, enabled by default)
+- **Prompt Enhancement:** Adds 2-5 seconds latency (optional, disabled by default)
 - **Batch Processing:** Default 8 concurrent requests (`MAX_BATCH_SIZE`)
 - **Timeouts:** 60s for generation (SDK default), 30s for enhancement
 - **Image Size:**
@@ -411,7 +411,7 @@ except Exception as e:
 - **Google Search:** Adds 1-3 seconds for grounding queries
 
 **Optimization tips:**
-- Disable enhancement for faster iteration: `enhance_prompt=False`
+- Enable enhancement for simple/vague prompts: `enhance_prompt=True`
 - Use 1K for development/testing, 2K for balanced quality (default), 4K for production
 - Limit reference images to what's actually needed
 

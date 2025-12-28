@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 async def generate_image_tool(
     prompt: str,
     model: str | None = None,
-    enhance_prompt: bool = True,
+    enhance_prompt: bool = False,
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
@@ -43,7 +43,7 @@ async def generate_image_tool(
     Args:
         prompt: Text description for image generation
         model: Model to use (default: gemini-3-pro-image-preview)
-        enhance_prompt: Automatically enhance prompt for better results
+        enhance_prompt: Automatically enhance prompt for better results (default: False)
         aspect_ratio: Image aspect ratio (1:1, 16:9, 9:16, etc.)
         image_size: Image resolution: 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
@@ -159,7 +159,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
     async def generate_image(
         prompt: str,
         model: str | None = None,
-        enhance_prompt: bool = True,
+        enhance_prompt: bool = False,
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
@@ -181,7 +181,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         Args:
             prompt: Text description of the image to generate
             model: Model to use (default: gemini-3-pro-image-preview)
-            enhance_prompt: Automatically enhance prompt using AI (default: True)
+            enhance_prompt: Automatically enhance prompt using AI (default: False)
             aspect_ratio: Image aspect ratio like 1:1, 16:9, 9:16, 3:2, 4:5, etc. (default: 1:1)
             image_size: Image resolution: 1K, 2K, or 4K (default: 2K)
             output_format: Image format: png, jpeg, webp (default: png)
@@ -196,7 +196,21 @@ def register_generate_image_tool(mcp_server: Any) -> None:
             JSON string with generation results, file paths, thoughts, and grounding metadata
 
         IMPORTANT - AI Assistant Instructions:
-        After generating an image, you MUST:
+
+        PROMPT ENHANCEMENT GUIDANCE:
+        - enhance_prompt is OFF by default (False) to preserve user intent
+        - ONLY set enhance_prompt=True when:
+          1. User explicitly requests prompt enhancement
+          2. You determine your prompt is too simple/vague (e.g., "a cat" or "sunset")
+          3. User wants more creative/detailed interpretation
+        - DO NOT enable for:
+          - Well-detailed prompts with specific requirements
+          - Technical/precise image requests (diagrams, infographics, UI mockups)
+          - When user wants exact control over composition
+        - Enhancement adds 2-5 seconds latency and uses Gemini Flash
+
+        AFTER IMAGE GENERATION:
+        You MUST:
         1. Parse the JSON response to extract the file path from result["images"][0]["path"]
         2. Inform the user of the EXACT file path where the image was saved
         3. Use the Read tool to load and display the image to the user
