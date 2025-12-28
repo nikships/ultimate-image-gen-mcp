@@ -65,7 +65,7 @@ async def generate_image_tool(
     if model:
         validate_model(model)
     validate_aspect_ratio(aspect_ratio)
-    validate_image_size(image_size)  # Critical: ensures uppercase 'K'
+    image_size = validate_image_size(image_size)  # Normalizes to uppercase 'K'
     validate_image_format(output_format)
 
     # Get settings
