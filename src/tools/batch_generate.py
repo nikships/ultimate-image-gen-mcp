@@ -150,7 +150,10 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
         After batch generation completes, you MUST:
         1. Parse the JSON response to extract file paths from result["results"][i]["images"][0]["path"]
         2. Show the user a summary of all generated images with their file paths
-        3. Optionally display one or more images using the Read tool
+        3. Open one or more images in the native OS picture viewer using Bash (DO NOT use Read tool):
+           - macOS: `open "/path/to/image.png"`
+           - Linux: `xdg-open "/path/to/image.png"`
+           - Windows: `start "" "/path/to/image.png"`
         4. Let the user know the total count of successful vs failed generations
 
         Example response to user:
@@ -160,6 +163,7 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
         3. /path/to/image3.png - [description]"
 
         DO NOT just say "batch generation completed" without listing the file paths!
+        DO NOT use the Read tool to display images - use native OS viewer instead!
         """
         try:
             result = await batch_generate_images(

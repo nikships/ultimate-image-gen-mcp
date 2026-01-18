@@ -427,13 +427,12 @@ def register_generate_image_tool(mcp_server: Any) -> None:
 
         1. Parse the JSON response to extract the file path: result["images"][0]["path"]
         2. Inform the user of the EXACT file path where the image was saved
-        3. Use the Read tool to load and display the image to the user
+        3. Open the image in the native OS picture viewer using Bash (DO NOT use Read tool):
+           - macOS: `open "/path/to/image.png"`
+           - Linux: `xdg-open "/path/to/image.png"`
+           - Windows: `start "" "/path/to/image.png"`
         4. If thoughts were generated, show the thinking process to the user
         5. If Google Search was used, mention the grounding sources
-        6. Optionally: Use bash to open the image in the default viewer:
-           - macOS: `open /path/to/image.png`
-           - Linux: `xdg-open /path/to/image.png`
-           - Windows: `start /path/to/image.png`
 
         Complete Workflow Example:
         ```
@@ -442,12 +441,12 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         3. Tell user: "✓ Image saved to: /Users/name/gemini_images/gemini3_20250128_image.png"
         4. If thoughts exist: "The model used thinking mode and generated 2 interim
            compositions before the final image."
-        5. Call Read tool with the file_path to display the image to user
-        6. Optionally call Bash: `open /Users/name/gemini_images/gemini3_20250128_image.png`
+        5. Call Bash to open image: `open "/Users/name/gemini_images/gemini3_20250128_image.png"`
         ```
 
-        ❌ DO NOT just say "image generated successfully" without showing the path and image!
-        ❌ DO NOT skip displaying the image using the Read tool!
+        ❌ DO NOT just say "image generated successfully" without showing the path!
+        ❌ DO NOT use the Read tool to display the image - use native OS viewer instead!
+        ✓ DO open the image in the native picture viewer (open/xdg-open/start)
         ✓ DO parse and show all relevant metadata to help users understand the generation
 
 
