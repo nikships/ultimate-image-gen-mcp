@@ -1,6 +1,6 @@
 [project]
 name = "ultimate-gemini-mcp"
-version = "3.0.14"
+version = "3.0.15"
 description = "Gemini 3 Pro Image MCP server with advanced features: high-resolution output (1K-4K), reference images (up to 14), Google Search grounding, and thinking mode"
 readme = "README.md"
 requires-python = ">=3.11"
