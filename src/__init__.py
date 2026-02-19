@@ -1,10 +1,9 @@
 """
 Ultimate Gemini MCP Server
 
-A unified MCP server that combines the best features from:
-- Gemini 2.5 Flash Image (with prompt enhancement)
-- Imagen 3, 4, and 4-Ultra
-- Advanced features: batch processing, editing, templates, and more
+A production-ready MCP server for Google's Gemini 3 Pro Image, featuring
+high-resolution output (1K-4K), reference images, Google Search grounding,
+thinking mode, prompt enhancement, and batch processing.
 """
 
 __version__ = "3.0.15"

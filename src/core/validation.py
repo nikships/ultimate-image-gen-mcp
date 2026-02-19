@@ -1,6 +1,4 @@
-"""
-Input validation utilities.
-"""
+"""Input validation utilities."""
 
 import base64
 import re
@@ -20,7 +18,6 @@ def validate_prompt(prompt: str) -> None:
     """Validate prompt text."""
     if not prompt or not prompt.strip():
         raise ValidationError("Prompt cannot be empty")
-
     if len(prompt) > MAX_PROMPT_LENGTH:
         raise ValidationError(
             f"Prompt too long: {len(prompt)} characters (max {MAX_PROMPT_LENGTH})"
@@ -49,7 +46,7 @@ def validate_image_format(format_str: str) -> None:
 
 
 def validate_file_path(path: str) -> Path:
-    """Validate and return file path."""
+    """Validate that the path exists and refers to a file."""
     try:
         file_path = Path(path).resolve()
     except Exception as e:
@@ -57,7 +54,6 @@ def validate_file_path(path: str) -> Path:
 
     if not file_path.exists():
         raise ValidationError(f"File does not exist: {file_path}")
-
     if not file_path.is_file():
         raise ValidationError(f"Path is not a file: {file_path}")
 
@@ -70,19 +66,18 @@ def validate_base64_image(data: str) -> None:
         raise ValidationError("Base64 image data cannot be empty")
 
     try:
-        # Try to decode to verify it's valid base64
         decoded = base64.b64decode(data, validate=True)
-        if len(decoded) == 0:
-            raise ValidationError("Decoded image data is empty")
     except Exception as e:
         raise ValidationError(f"Invalid base64 image data: {e}") from e
 
+    if len(decoded) == 0:
+        raise ValidationError("Decoded image data is empty")
+
 
 def validate_prompts_list(prompts: list[str]) -> None:
-    """Validate list of prompts for batch processing."""
+    """Validate a list of prompts for batch processing."""
     if not isinstance(prompts, list):
         raise ValidationError("Prompts must be a list")
-
     if not prompts:
         raise ValidationError("Prompts list cannot be empty")
 
@@ -96,40 +91,25 @@ def validate_prompts_list(prompts: list[str]) -> None:
 
 
 def sanitize_filename(filename: str) -> str:
-    """Sanitize filename to remove unsafe and special characters."""
-    # Replace all non-alphanumeric characters (except hyphens) with underscores
+    """Sanitize a filename by replacing special characters with underscores."""
     safe_name = re.sub(r"[^a-zA-Z0-9-]", "_", filename)
-    # Remove multiple consecutive underscores
     safe_name = re.sub(r"_+", "_", safe_name)
-    # Remove leading/trailing underscores
     safe_name = safe_name.strip("_")
-    # Ensure filename is not empty
-    if not safe_name:
-        safe_name = "image"
-    return safe_name
+    return safe_name or "image"
 
 
 def validate_batch_size(size: int, max_size: int) -> None:
-    """Validate batch size."""
+    """Validate that batch size is a positive integer within the allowed maximum."""
     if not isinstance(size, int) or size < 1:
         raise ValidationError(f"Batch size must be at least 1, got {size}")
-
     if size > max_size:
         raise ValidationError(f"Batch size exceeds maximum: {size} > {max_size}")
 
 
 def validate_image_size(size: str) -> str:
-    """
-    Validate and normalize image size parameter for Gemini 3 Pro Image.
-
-    CRITICAL: The API requires uppercase 'K' (e.g., "2K" not "2k").
-    This function automatically converts valid lowercase inputs to the required format.
-    """
-    normalized_size = size.upper()
-    if normalized_size not in IMAGE_SIZES:
+    """Validate and normalize image size to uppercase (e.g. '2k' -> '2K')."""
+    normalized = size.upper()
+    if normalized not in IMAGE_SIZES:
         available = ", ".join(IMAGE_SIZES)
-        raise ValidationError(
-            f"Invalid image size '{size}'. Must be one of: {available}. "
-            f"Note: The API requires an uppercase 'K'."
-        )
-    return normalized_size
+        raise ValidationError(f"Invalid image size '{size}'. Must be one of: {available}")
+    return normalized

@@ -1,7 +1,4 @@
-"""
-Prompt enhancement service using Gemini Flash.
-Automatically optimizes prompts for better image generation results.
-"""
+"""Prompt enhancement service using Gemini Flash."""
 
 import logging
 from typing import Any
@@ -31,15 +28,9 @@ Follow these guidelines:
 
 
 class PromptEnhancer:
-    """Service for enhancing image generation prompts."""
+    """Enhances image generation prompts using Gemini Flash."""
 
-    def __init__(self, gemini_client: GeminiClient):
-        """
-        Initialize prompt enhancer.
-
-        Args:
-            gemini_client: Gemini client for text generation
-        """
+    def __init__(self, gemini_client: GeminiClient) -> None:
         self.gemini_client = gemini_client
 
     async def enhance_prompt(
@@ -49,16 +40,16 @@ class PromptEnhancer:
         context: dict[str, Any] | None = None,
     ) -> dict[str, str]:
         """
-        Enhance a prompt for better image generation.
+        Enhance a prompt for better image generation results.
 
         Args:
-            original_prompt: Original user prompt
-            context: Optional context (features, image type, etc.)
+            original_prompt: The user's original prompt
+            context: Optional context hints (aspect_ratio, has_reference_images, etc.)
 
         Returns:
-            Dict with 'enhanced_prompt' and 'original_prompt'
+            Dict with 'original_prompt' and 'enhanced_prompt' keys. On failure,
+            both keys contain the original prompt.
         """
-        # Build enhancement instruction
         instruction = self._build_enhancement_instruction(original_prompt, context)
 
         try:
@@ -67,71 +58,58 @@ class PromptEnhancer:
                 system_instruction=PROMPT_ENHANCEMENT_SYSTEM_INSTRUCTION,
                 model="gemini-flash-latest",
             )
-
-            # Clean up the enhanced prompt
             enhanced = enhanced.strip()
-
-            logger.info(f"Enhanced prompt: {len(original_prompt)} -> {len(enhanced)} chars")
-
-            return {
-                "original_prompt": original_prompt,
-                "enhanced_prompt": enhanced,
-            }
+            logger.info(f"Prompt enhanced: {len(original_prompt)} -> {len(enhanced)} chars")
+            return {"original_prompt": original_prompt, "enhanced_prompt": enhanced}
 
         except Exception as e:
             logger.warning(f"Prompt enhancement failed, using original: {e}")
-            return {
-                "original_prompt": original_prompt,
-                "enhanced_prompt": original_prompt,
-            }
+            return {"original_prompt": original_prompt, "enhanced_prompt": original_prompt}
 
     def _build_enhancement_instruction(self, prompt: str, context: dict[str, Any] | None) -> str:
-        """Build the instruction for prompt enhancement."""
-        instruction_parts = [f"Enhance this image generation prompt:\n\n{prompt}"]
+        """Compose the enhancement instruction from the prompt and optional context hints."""
+        parts = [f"Enhance this image generation prompt:\n\n{prompt}"]
 
         if context:
-            # Add context hints
             if context.get("is_editing"):
-                instruction_parts.append("\nContext: This is for image editing/modification")
+                parts.append("\nContext: This is for image editing/modification")
 
             if context.get("maintain_character_consistency"):
-                instruction_parts.append(
+                parts.append(
                     "\nIMPORTANT: Describe the character with specific, consistent features "
                     "for use across multiple generations"
                 )
 
             if context.get("blend_images"):
-                instruction_parts.append(
+                parts.append(
                     "\nContext: Multiple images will be blended. Describe how elements "
                     "should be composed naturally together"
                 )
 
             if context.get("use_world_knowledge"):
-                instruction_parts.append(
+                parts.append(
                     "\nContext: Include accurate real-world details for historical figures, "
                     "landmarks, or factual scenarios"
                 )
 
-            if context.get("aspect_ratio"):
-                ratio = context["aspect_ratio"]
-                if ratio in ["16:9", "21:9"]:
-                    instruction_parts.append("\nFormat: Wide landscape composition")
-                elif ratio in ["9:16", "2:3", "3:4"]:
-                    instruction_parts.append("\nFormat: Vertical/portrait composition")
+            ratio = context.get("aspect_ratio")
+            if ratio in ("16:9", "21:9"):
+                parts.append("\nFormat: Wide landscape composition")
+            elif ratio in ("9:16", "2:3", "3:4"):
+                parts.append("\nFormat: Vertical/portrait composition")
 
-        return "\n".join(instruction_parts)
+        return "\n".join(parts)
 
 
 async def create_prompt_enhancer(api_key: str, timeout: int = 30) -> PromptEnhancer:
     """
-    Factory function to create prompt enhancer.
+    Factory function to create a standalone PromptEnhancer.
 
     Args:
         api_key: Gemini API key
-        timeout: Request timeout
+        timeout: Request timeout in seconds
 
     Returns:
         PromptEnhancer instance
     """
-    gemini_client = GeminiClient(api_key=api_key, timeout=timeout)
-    return PromptEnhancer(gemini_client)
+    return PromptEnhancer(GeminiClient(api_key=api_key, timeout=timeout))

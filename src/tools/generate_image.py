@@ -32,13 +32,9 @@ async def generate_image_tool(
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
-    # Reference images (up to 14)
     reference_image_paths: list[str] | None = None,
-    # Google Search grounding
     enable_google_search: bool = False,
-    # Response modalities
     response_modalities: list[str] | None = None,
-    # Output options
     save_to_disk: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]:
@@ -60,7 +56,6 @@ async def generate_image_tool(
     Returns:
         Dict with generated images and metadata
     """
-    # Validate inputs
     validate_prompt(prompt)
     if model:
         validate_model(model)
@@ -68,14 +63,11 @@ async def generate_image_tool(
     image_size = validate_image_size(image_size)  # Normalizes to uppercase 'K'
     validate_image_format(output_format)
 
-    # Get settings
     settings = get_settings()
 
-    # Determine model
     if model is None:
         model = settings.api.default_model
 
-    # Initialize image service
     image_service = ImageService(
         api_key=settings.api.gemini_api_key,
         enable_enhancement=settings.api.enable_prompt_enhancement,
@@ -83,35 +75,28 @@ async def generate_image_tool(
     )
 
     try:
-        # Prepare parameters for Gemini 3 Pro Image
         params: dict[str, Any] = {
             "aspect_ratio": aspect_ratio,
             "image_size": image_size,
         }
 
-        # Add reference images if provided (up to 14)
         if reference_image_paths:
             reference_images = []
-            for img_path in reference_image_paths[:14]:  # Limit to max 14
+            for img_path in reference_image_paths[:14]:
                 image_path = Path(img_path)
                 if image_path.exists():
-                    image_data = base64.b64encode(image_path.read_bytes()).decode()
-                    reference_images.append(image_data)
+                    reference_images.append(base64.b64encode(image_path.read_bytes()).decode())
                 else:
                     logger.warning(f"Reference image not found: {img_path}")
-
             if reference_images:
                 params["reference_images"] = reference_images
 
-        # Add Google Search grounding if enabled
         if enable_google_search:
             params["enable_google_search"] = True
 
-        # Add response modalities
         if response_modalities:
             params["response_modalities"] = response_modalities
 
-        # Generate images
         results = await image_service.generate(
             prompt=prompt,
             model=model,
@@ -119,7 +104,6 @@ async def generate_image_tool(
             **params,
         )
 
-        # Prepare response
         response: dict[str, Any] = {
             "success": True,
             "model": model,
@@ -132,21 +116,18 @@ async def generate_image_tool(
             },
         }
 
-        # Save images and prepare for MCP response
         for result in results:
-            image_info = {
+            image_info: dict[str, Any] = {
                 "index": result.index,
                 "size": result.get_size(),
                 "timestamp": result.timestamp.isoformat(),
             }
 
             if save_to_disk:
-                # Save to output directory
                 file_path = result.save(settings.output_dir)
                 image_info["path"] = str(file_path)
                 image_info["filename"] = file_path.name
 
-            # Add enhanced prompt info
             if "enhanced_prompt" in result.metadata:
                 image_info["enhanced_prompt"] = result.metadata["enhanced_prompt"]
 
@@ -161,7 +142,7 @@ async def generate_image_tool(
 def register_generate_image_tool(mcp_server: Any) -> None:
     """Register generate_image tool with MCP server."""
 
-    @mcp_server.tool()
+    @mcp_server.tool(timeout=120.0)
     async def generate_image(
         prompt: str,
         model: str | None = None,

@@ -38,7 +38,6 @@ async def batch_generate_images(
     Returns:
         Dict with batch results
     """
-    # Validate inputs
     validate_prompts_list(prompts)
 
     settings = get_settings()
@@ -47,7 +46,6 @@ async def batch_generate_images(
 
     validate_batch_size(batch_size, MAX_BATCH_SIZE)
 
-    # Prepare results
     results: dict[str, Any] = {
         "success": True,
         "total_prompts": len(prompts),
@@ -57,12 +55,10 @@ async def batch_generate_images(
         "results": [],
     }
 
-    # Process prompts in batches
     for i in range(0, len(prompts), batch_size):
         batch = prompts[i : i + batch_size]
         logger.info(f"Processing batch {i // batch_size + 1}: {len(batch)} prompts")
 
-        # Create tasks for parallel processing
         tasks = [
             generate_image_tool(
                 prompt=prompt,
@@ -75,10 +71,8 @@ async def batch_generate_images(
             for prompt in batch
         ]
 
-        # Execute batch
         batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Process results
         for j, result in enumerate(batch_results):
             prompt_index = i + j
 
@@ -93,24 +87,23 @@ async def batch_generate_images(
                         "error": str(result),
                     }
                 )
-            else:
-                # result is dict[str, Any] here (not an Exception)
-                if not isinstance(result, dict):
-                    logger.error(f"Unexpected result type: {type(result)}")
-                    results["failed"] += 1
-                    results["results"].append(
-                        {
-                            "prompt_index": prompt_index,
-                            "prompt": batch[j],
-                            "success": False,
-                            "error": "Unexpected result type",
-                        }
-                    )
-                else:
-                    results["completed"] += 1
-                    results["results"].append(
-                        {"prompt_index": prompt_index, "prompt": batch[j], **result}
-                    )
+                continue
+
+            if not isinstance(result, dict):
+                logger.error(f"Unexpected result type: {type(result)}")
+                results["failed"] += 1
+                results["results"].append(
+                    {
+                        "prompt_index": prompt_index,
+                        "prompt": batch[j],
+                        "success": False,
+                        "error": "Unexpected result type",
+                    }
+                )
+                continue
+
+            results["completed"] += 1
+            results["results"].append({"prompt_index": prompt_index, "prompt": batch[j], **result})
 
     return results
 
@@ -118,7 +111,7 @@ async def batch_generate_images(
 def register_batch_generate_tool(mcp_server: Any) -> None:
     """Register batch_generate tool with MCP server."""
 
-    @mcp_server.tool()
+    @mcp_server.tool(timeout=600.0)
     async def batch_generate(
         prompts: list[str],
         model: str | None = None,
@@ -141,7 +134,7 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
             aspect_ratio: Aspect ratio for all images (default: 1:1)
             output_format: Image format for all images (default: png)
             batch_size: Parallel batch size (default: from config)
-            negative_prompt: Negative prompt for Imagen models (optional)
+            negative_prompt: Optional negative prompt passed through to generation
 
         Returns:
             JSON string with batch results including individual image paths
