@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from ..config.constants import GEMINI_MODELS
-from ..core import sanitize_filename
 from ..core.exceptions import ImageProcessingError
 from .gemini_client import GeminiClient
 from .prompt_enhancer import PromptEnhancer
@@ -44,14 +43,13 @@ class ImageResult:
             raise ImageProcessingError(f"Failed to save image: {e}") from e
 
     def _generate_filename(self) -> str:
-        """Generate a descriptive filename from model, timestamp, and prompt."""
-        timestamp = self.timestamp.strftime("%Y%m%d_%H%M%S")
-        model_short = self.model.replace("gemini-3-pro-image-preview", "gemini3").replace(
-            "imagen-4-", "img4-"
-        )
-        prompt_snippet = sanitize_filename(self.prompt[:30])
-        index_str = f"_{self.index + 1}" if self.index > 0 else ""
-        return f"{model_short}_{timestamp}_{prompt_snippet}{index_str}.png"
+        """Generate a readable filename from the prompt and a short timestamp."""
+        import re
+
+        slug = re.sub(r"[^a-z0-9]+", "-", self.prompt[:60].lower()).strip("-")
+        time_suffix = self.timestamp.strftime("%H%M%S")
+        index_str = f"-{self.index + 1}" if self.index > 0 else ""
+        return f"{slug}{index_str}-{time_suffix}.png"
 
     def get_size(self) -> int:
         """Return the image size in bytes."""

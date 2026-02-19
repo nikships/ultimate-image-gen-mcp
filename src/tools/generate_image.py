@@ -387,7 +387,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
             {
               "index": 0,
               "path": "/full/path/to/generated_image.png",
-              "filename": "gemini3_20250128_123456_prompt_snippet.png",
+              "filename": "a-photorealistic-close-up-portrait-of-an-elderly-j-123456.png",
               "size": 4567890,  // bytes
               "timestamp": "2025-01-28T12:34:56.789012",
               "enhanced_prompt": "enhanced version if enhancement was used"
