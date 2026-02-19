@@ -1,209 +1,117 @@
 ![Ultimate Gemini MCP Banner](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/banner.png)
 
-# Gemini 3 Pro Image MCP Server 🎨
+# Ultimate Gemini MCP
 
-> Professional MCP server exclusively for Google's **Gemini 3 Pro Image Preview** (aka "Nano Banana Pro") - state-of-the-art image generation with advanced reasoning, high-resolution output (1K-4K), up to 14 reference images, Google Search grounding, and automatic thinking mode.
+> MCP server for Google's **Gemini 3 Pro Image Preview** — state-of-the-art image generation with advanced reasoning, 1K–4K resolution, up to 14 reference images, Google Search grounding, and automatic thinking mode.
 
-**✨ All generated images include invisible SynthID watermarks for authenticity and provenance tracking.**
+**All generated images include invisible SynthID watermarks for authenticity and provenance tracking.**
 
-## ✨ Features
+---
 
-### Gemini 3 Pro Image Capabilities
-- **High-Resolution Output**: Generate images in 1K, 2K, and 4K resolutions
-- **Advanced Text Rendering**: Create legible, stylized text in infographics, menus, diagrams, and marketing assets
-- **Up to 14 Reference Images**: Mix up to 14 reference images (6 objects + 5 humans) for consistent style and characters
-- **Google Search Grounding**: Use real-time data from Google Search (weather, stocks, events, maps)
-- **Thinking Mode**: Model uses reasoning process to refine composition before generating final output
+## Features
 
-### Advanced Capabilities
-- 🤖 **AI Prompt Enhancement**: Automatically optimize prompts using Gemini Flash for superior results
-- 🔍 **Google Search Integration**: Generate images based on real-time information
-- 🎨 **Reference Images**: Use up to 14 images for style consistency and character preservation
-- 📐 **Flexible Aspect Ratios**: Support for 10 aspect ratios (1:1, 16:9, 9:16, 3:2, 4:3, 4:5, 5:4, 2:3, 3:4, 21:9)
-- 💭 **Thought Process Visibility**: See the model's thinking process (interim images and reasoning)
-- 🚀 **Batch Processing**: Generate multiple images efficiently with parallel processing
-- 🎯 **Dual Modalities**: Get both text explanations and images in responses
+### Gemini 3 Pro Image
+- **High-Resolution Output**: 1K, 2K, and 4K resolution
+- **Advanced Text Rendering**: Legible, stylized text in infographics, menus, diagrams, and logos
+- **Up to 14 Reference Images**: Up to 6 object images + up to 5 human images for style/character consistency
+- **Google Search Grounding**: Real-time data (weather, stocks, events, maps)
+- **Thinking Mode**: Model reasons about composition before producing the final image (automatic, always on)
 
-### Production Ready
-- Comprehensive error handling and validation
-- Configurable settings via environment variables
-- Detailed logging and debugging
-- MCP resources for configuration and model information
+### Server Features
+- **AI Prompt Enhancement**: Optionally auto-enhance prompts using Gemini Flash
+- **Batch Processing**: Generate multiple images in parallel (up to 8 concurrent)
+- **22 Expert Prompt Templates**: MCP slash commands for photography, logos, cinematics, storyboards, and more
+- **Flexible Aspect Ratios**: 10 options — 1:1, 16:9, 9:16, 3:2, 4:3, 4:5, 5:4, 2:3, 3:4, 21:9
+- **Configurable via Environment Variables**: Output directory, default size, timeouts, and more
 
-## 🎬 Showcase - Gemini 3 Pro Image Features
+---
 
-> **Gemini 3 Pro Image** - Experience state-of-the-art image generation with advanced reasoning and high-resolution output.
+## Showcase
 
-### Key Features in Action
+### Prompt Enhancement
 
-All images can be generated with **4K resolution** and **optional AI prompt enhancement**.
+When `enhance_prompt: true`, simple prompts are transformed into detailed, cinematic descriptions.
 
-### Example Use Cases
+**Original:** `"A fierce wolf wearing the black symbiote Spider-Man suit, web-slinging through city at night"`
 
-**1. High-Resolution Professional Assets**
-```
-Generate a 4K image of "modern office interior with natural lighting"
-- Model: gemini-3-pro-image-preview
-- Image Size: 4K
-- Aspect Ratio: 16:9
-```
+**Enhanced:** `"A powerfully built Alaskan Tundra Wolf, snarling fiercely, wearing the matte black, viscous, wet-looking symbiote suit with exaggerated white spider emblem. Captured mid-air in dramatic web-slinging arc with taut glowing webbing. Extreme low-angle perspective, hyper-realistic neo-noir cityscape at midnight with rain-slicked asphalt. High-contrast cinematic lighting with deep shadows and electric neon rim lighting."`
 
-**2. Real-Time Data Visualization**
-```
-Generate an image with Google Search grounding:
-"Visualize the current weather forecast for the next 5 days in San Francisco as a clean, modern weather chart. Add a visual on what I should wear each day"
-- Enable Google Search: true
-- Aspect Ratio: 16:9
-```
-
-**3. Reference Image Consistency**
-```
-Use reference images to maintain consistent characters:
-- Provide up to 5 human reference images
-- Provide up to 6 object reference images
-- Generate "An office group photo of these people, they are making funny faces"
-```
-
-**4. Advanced Text Rendering**
-```
-Generate infographics, menus, or diagrams with legible text:
-"Create a restaurant menu with elegant typography showing appetizers, mains, and desserts"
-- Image Size: 2K
-- Aspect Ratio: 3:4
-```
-
-### 🔥 Why Gemini 3 Pro Image Is Powerful
-
-1. **State-of-the-Art Quality**: Built-in generation capabilities up to 4K resolution
-2. **Advanced Reasoning**: Thinking mode refines composition before final output
-3. **Real-Time Grounding**: Google Search integration for accurate, current data
-4. **Character Consistency**: Use up to 14 reference images for maintaining style
-5. **Professional Features**: Advanced text rendering for infographics and marketing
-
-## 🎨 Prompt Enhancement Showcase
-
-See the power of AI prompt enhancement! When enabled, simple prompts can be transformed into detailed, cinematic descriptions:
-
-**Original:** "A fierce wolf wearing the black symbiote Spider-Man suit, web-slinging through city at night"
-
-**Enhanced:** "A powerfully built Alaskan Tundra Wolf, snarling fiercely, wearing the matte black, viscous, wet-looking symbiote suit with exaggerated white spider emblem. Captured mid-air in dramatic web-slinging arc with taut glowing webbing. Extreme low-angle perspective, hyper-detailed neo-noir cityscape at midnight with rain-slicked asphalt. High-contrast cinematic lighting with deep shadows and electric neon rim lighting."
-
-### Generated Images (2K, 16:9, Prompt Enhancement: ON)
-
-**Wolf - Black Symbiote Suit**
-
+**Wolf — Black Symbiote Suit**
 ![Wolf in Black Symbiote Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/wolf_symbiote.png)
 
-**Lion - Classic Red & Blue Suit**
-
+**Lion — Classic Red & Blue Suit**
 ![Lion in Classic Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/lion_classic.png)
 
-**Black Panther - Symbiote Suit**
-
+**Black Panther — Symbiote Suit**
 ![Panther in Symbiote Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/panther_symbiote.png)
 
-**Eagle - Classic Suit in Flight**
-
+**Eagle — Classic Suit in Flight**
 ![Eagle in Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/eagle_classic.png)
 
-**Grizzly Bear - Symbiote Suit**
-
+**Grizzly Bear — Symbiote Suit**
 ![Bear in Symbiote Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/bear_symbiote.png)
 
-**Fox - Classic Suit at Dusk**
-
+**Fox — Classic Suit at Dusk**
 ![Fox in Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/fox_classic.png)
 
-All images generated with `enhance_prompt: true`, showcasing how simple descriptions can become photorealistic, cinematic masterpieces with dramatic lighting, detailed textures, and professional composition when enhancement is enabled.
+All generated with `enhance_prompt: true`, 2K, 16:9.
 
-## 📸 Photorealistic Capabilities
+---
 
-Gemini 3 Pro Image excels at creating incredibly realistic images of people in unusual and imaginative scenarios:
+### Photorealistic Capabilities
 
-**Jensen Huang - GPU Surfing**
-
+**Jensen Huang — GPU Surfing**
 ![Jensen surfing on GPU through cyberpunk city](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/jensen_gpu_surfing.png)
-*Riding a giant NVIDIA GPU chip through a neon-lit cyberpunk cityscape*
 
-**Elon Musk - Mars Chess Match**
-
+**Elon Musk — Mars Chess Match**
 ![Elon playing chess with robot on Mars](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/elon_mars_chess.png)
-*Playing chess with a humanoid robot on the surface of Mars, Earth visible in background*
 
-**Jensen Huang - GPU Kitchen**
-
+**Jensen Huang — GPU Kitchen**
 ![Jensen cooking with GPU appliances](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/jensen_gpu_kitchen.png)
-*Cooking breakfast in a high-tech kitchen where all appliances are GPUs with RGB lighting*
 
-**Elon Musk - Cybertruck Symphony**
-
+**Elon Musk — Cybertruck Symphony**
 ![Elon conducting Cybertruck orchestra](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/elon_cybertruck_symphony.png)
-*Conducting a symphony orchestra made entirely of Tesla Cybertrucks in a concert hall*
 
-**Jensen Huang - Underwater Data Center**
-
+**Jensen Huang — Underwater Data Center**
 ![Jensen scuba diving in data center](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/jensen_underwater_datacenter.png)
-*Scuba diving in an underwater data center surrounded by glowing servers and tropical fish*
 
-**Elon Musk - SpaceX Skateboarding**
-
+**Elon Musk — SpaceX Skateboarding**
 ![Elon skateboarding at SpaceX](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/elon_spacex_skateboard.png)
-*Skateboarding through the SpaceX factory with a Starship rocket in the background*
 
-These images demonstrate the model's exceptional ability to:
-- Generate photorealistic human likenesses
-- Blend reality with creative, surreal concepts
-- Maintain accurate lighting and perspective
-- Create detailed, believable environments
-- Handle complex compositions with multiple elements
+---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Python 3.11 or higher
-- [Google Gemini API key](https://makersuite.google.com/app/apikey) (free)
+- Python 3.11+
+- [Google Gemini API key](https://makersuite.google.com/app/apikey) (free tier available)
 
 ### Installation
 
-#### Option 1: Using uv (Recommended)
+**Using uvx (recommended — no install needed):**
 ```bash
-# Install uv if you haven't already
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install and run the server
 uvx ultimate-gemini-mcp
 ```
 
-#### Option 2: Using pip
+**Using pip:**
 ```bash
 pip install ultimate-gemini-mcp
 ```
 
-#### Option 3: From Source
+**From source:**
 ```bash
-git clone <repository-url>
-cd ultimate-gemini-mcp
+git clone https://github.com/anand-92/ultimate-image-gen-mcp
+cd ultimate-image-gen-mcp
 uv sync
 ```
 
-### Configuration
+---
 
-Create a `.env` file in your project directory:
-```bash
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
-```
+## Setup
 
-Or set environment variables directly:
-```bash
-export GEMINI_API_KEY=your_api_key_here
-```
+### Claude Desktop
 
-## 📖 Usage
-
-### With Claude Desktop
-
-Add to your `claude_desktop_config.json`:
+Add to `claude_desktop_config.json`:
 
 ```json
 {
@@ -219,35 +127,23 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-**Important Notes:**
-
-1. **Images are automatically saved** to `~/gemini_images` (your home directory). You can optionally set `OUTPUT_DIR` to customize this location:
-   - **macOS**: `"OUTPUT_DIR": "/Users/yourusername/custom_folder"`
-   - **Windows**: `"OUTPUT_DIR": "C:\\Users\\YourUsername\\custom_folder"`
-
-2. **uvx path issues on macOS**: If you get `spawn uvx ENOENT` errors, use the full path to uvx:
-   ```json
-   "command": "/Users/yourusername/.local/bin/uvx"
-   ```
-
-**Config file locations:**
+Config file locations:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-### With Claude Code (VS Code)
+> **macOS `spawn uvx ENOENT` error**: Use the full path — find it with `which uvx`, then set `"command": "/Users/you/.local/bin/uvx"`.
+
+### Claude Code
 
 ```bash
-# Add MCP server to Claude Code
 claude mcp add ultimate-gemini \
   --env GEMINI_API_KEY=your-api-key \
   -- uvx ultimate-gemini-mcp
 ```
 
-**Note**: Images are automatically saved to `~/gemini_images`. To customize, add `--env OUTPUT_DIR=/your/custom/path`.
+### Cursor
 
-### With Cursor
-
-Add to Cursor's MCP configuration (`.cursor/mcp.json`):
+Add to `.cursor/mcp.json`:
 
 ```json
 {
@@ -263,263 +159,129 @@ Add to Cursor's MCP configuration (`.cursor/mcp.json`):
 }
 ```
 
-**Note**: Images are automatically saved to `~/gemini_images`. Optionally add `"OUTPUT_DIR": "/your/custom/path"` to customize.
-
-## 🎯 Supported Model
-
-This MCP server exclusively supports:
-
-### Gemini 3 Pro Image Preview (gemini-3-pro-image-preview)
-The **only** model supported - Google's state-of-the-art image generation model (aka "Nano Banana Pro") optimized for professional asset production with:
-  - **Built-in 1K, 2K, and 4K resolution support** (must use uppercase 'K')
-  - **Advanced text rendering capabilities** for infographics, menus, diagrams, logos
-  - **Up to 14 reference images** (max 6 objects + max 5 humans) for style/character consistency
-  - **Google Search grounding** for real-time data (weather, stocks, events, maps)
-  - **Thinking mode with reasoning process** (automatic, cannot be disabled)
-  - **Support for both TEXT and IMAGE response modalities**
-  - **SynthID watermarking** automatically applied to all generated images
-
-## 🛠️ Tools
-
-### `generate_image`
-
-Generate professional images using Gemini 3 Pro Image with advanced features.
-
-**Parameters:**
-- `prompt` (required): Text description of the image to generate
-  - **Best Practice**: Use descriptive paragraphs, not keyword lists. "Describe the scene, don't just list keywords"
-- `model`: Model to use (default: gemini-3-pro-image-preview - the only supported model)
-- `enhance_prompt`: Automatically enhance prompt using Gemini Flash (default: false)
-  - Enable for simple/vague prompts; transforms them into detailed, cinematic descriptions
-- `aspect_ratio`: Image proportions (default: 1:1)
-  - Options: "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
-- `image_size`: Resolution (default: 2K)
-  - **CRITICAL**: Must use uppercase 'K': "1K", "2K", or "4K" (lowercase like "2k" will be rejected!)
-  - "1K" - Fast testing (1120 tokens, ~1-2MB)
-  - "2K" - Recommended for most use cases (1120 tokens, ~3-5MB)
-  - "4K" - Maximum quality for production (2000 tokens, ~8-15MB)
-- `output_format`: Image file format (default: png)
-  - Options: "png" (recommended), "jpeg", "webp"
-- `reference_image_paths`: List of paths to reference images (up to 14 total)
-  - Maximum 6 object images for high-fidelity inclusion of products/items
-  - Maximum 5 human images for character/person consistency
-  - Use for: character consistency, style transfer, object inclusion, multi-person compositions
-- `enable_google_search`: Enable Google Search grounding for real-time data (default: false)
-  - Use for: current events, weather forecasts, stock data, recent news, real-time maps
-  - Adds 1-3 seconds latency and includes grounding_metadata in response
-- `response_modalities`: Response types (default: ["TEXT", "IMAGE"])
-  - Options: ["TEXT", "IMAGE"], ["IMAGE"], ["TEXT"]
-
-**Examples:**
-```
-1. Basic image generation:
-   Generate an image of "a serene mountain landscape at sunset with a lake reflection"
-
-2. High-resolution with specific aspect ratio:
-   Generate a 4K image of "modern minimalist architecture" with aspect_ratio 16:9
-
-3. With Google Search grounding:
-   Generate an image with Google Search enabled: "Current weather map for New York City"
-
-4. With reference images:
-   Generate an image with reference_image_paths: ["/path/person1.png", "/path/person2.png"]
-   and prompt: "An office group photo of these people making funny faces"
-```
-
-### `batch_generate`
-
-Process multiple prompts efficiently with parallel batch processing.
-
-**Parameters:**
-- `prompts` (required): List of text prompts
-- `model`: Model to use for all images
-- `enhance_prompt`: Enhance all prompts (default: false) - Enable for simple/vague prompts
-- `aspect_ratio`: Aspect ratio for all images
-- `batch_size`: Parallel processing size (default: from config)
-
-**Example:**
-```
-Batch generate images for these prompts:
-1. "minimalist logo design for a tech startup"
-2. "modern dashboard UI design"
-3. "mobile app wireframe"
-```
-
-## 🎨 Advanced Features
-
-### AI Prompt Enhancement
-
-When enabled, the server uses Gemini Flash to automatically enhance your prompts:
-
-**Original:** `a cat wearing a space helmet`
-
-**Enhanced:** `A photorealistic portrait of a domestic tabby cat wearing a futuristic space helmet, close-up composition, warm studio lighting, detailed fur texture, reflective helmet visor showing subtle reflections, soft focus background, professional photography style`
-
-This significantly improves image quality without requiring you to be a prompt engineering expert!
-
-### Google Search Grounding
-
-Generate images based on real-time data:
-
-```
-Generate an image with Google Search enabled:
-- prompt: "Visualize the current weather forecast for San Francisco as a modern chart"
-- enable_google_search: true
-```
-
-The response will include grounding metadata with search sources used.
-
-### Reference Images for Consistency
-
-Maintain consistent characters and objects across generations:
-
-```
-Generate an image with:
-- prompt: "An office group photo of these people, they are making funny faces"
-- reference_image_paths: ["/path/person1.png", "/path/person2.png", "/path/person3.png"]
-- aspect_ratio: "5:4"
-- image_size: "2K"
-```
-
-You can provide up to 14 reference images (max 6 objects, max 5 humans).
-
-### High-Resolution Assets
-
-Generate professional 4K assets:
-
-```
-Generate a 4K image of "minimalist logo design for a tech startup"
-with image_size: "4K" and aspect_ratio: "1:1"
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GEMINI_API_KEY` | Google Gemini API key (required) | - |
-| `OUTPUT_DIR` | Directory for generated images | `~/gemini_images` |
-| `ENABLE_PROMPT_ENHANCEMENT` | Enable AI prompt enhancement | `false` |
-| `ENABLE_BATCH_PROCESSING` | Enable batch processing | `true` |
-| `DEFAULT_MODEL` | Default model | `gemini-3-pro-image-preview` |
-| `DEFAULT_IMAGE_SIZE` | Default resolution | `2K` |
-| `ENABLE_GOOGLE_SEARCH` | Enable Google Search grounding | `false` |
-| `REQUEST_TIMEOUT` | API request timeout (seconds) | `60` |
-| `MAX_BATCH_SIZE` | Maximum parallel batch size | `8` |
-| `LOG_LEVEL` | Logging level | `INFO` |
-
-## 📚 MCP Resources
-
-### `models://list`
-View all available models with descriptions and features.
-
-### `settings://config`
-View current server configuration.
-
-## 🎭 Use Cases
-
-### Web Development
-- Hero images and banners
-- UI/UX mockups and wireframes
-- Logo and branding assets
-- Placeholder images
-
-### App Development
-- App icons and splash screens
-- User interface elements
-- Marketing materials
-- Documentation images
-
-### Content Creation
-- Blog post illustrations
-- Social media graphics
-- Presentation visuals
-- Product mockups
-
-### Creative Projects
-- Character design iterations
-- Concept art exploration
-- Style variations
-- Scene composition
-
-## 📊 Gemini 3 Pro Image Features
-
-| Feature | Support | Details |
-|---------|---------|---------|
-| Resolution Options | ✅ 1K, 2K, 4K | Built-in high-resolution generation (MUST use uppercase 'K') |
-| Reference Images | ✅ Up to 14 | 6 objects + 5 humans for consistency |
-| Google Search Grounding | ✅ Real-time data | Weather, stocks, events, maps |
-| Thinking Mode | ✅ Advanced reasoning | Automatic (cannot be disabled), generates up to 2 interim images |
-| Text Rendering | ✅ Advanced | Legible text in infographics, menus, diagrams, logos |
-| Aspect Ratios | ✅ 10 options | Full flexibility for any format |
-| Response Modalities | ✅ TEXT + IMAGE | Dual output modes |
-| Prompt Enhancement | ✅ Built-in | AI-powered optimization using Gemini Flash |
-| SynthID Watermarking | ✅ Automatic | Invisible watermark on all generated images |
-| Thought Signatures | ✅ Automatic | Preserved across multi-turn interactions (handled by SDK) |
-| Best For | Professional assets, marketing, real-time visualization, logos, infographics |
-
-## 🐛 Troubleshooting
-
-### "spawn uvx ENOENT" error
-- **Cause**: Claude Desktop cannot find the `uvx` command in its PATH
-- **Solution**: Use the full path to uvx in your config:
-  ```json
-  "command": "/Users/yourusername/.local/bin/uvx"
-  ```
-- Find your uvx location with: `which uvx`
-
-### Custom output directory
-- **Default**: Images are automatically saved to `~/gemini_images` in your home directory
-- **Customize**: Set `OUTPUT_DIR` in your MCP config if you want a different location:
-  ```json
-  "env": {
-    "GEMINI_API_KEY": "your-key",
-    "OUTPUT_DIR": "/your/custom/path"
-  }
-  ```
-
-### "GEMINI_API_KEY not found"
-- Add your API key to `.env` or environment variables
-- Get a free key at [Google AI Studio](https://makersuite.google.com/app/apikey)
-
-### "Content blocked by safety filters"
-- Modify your prompt to comply with content policies
-- Try rephrasing without potentially sensitive content
-
-### "Rate limit exceeded"
-- Wait a few moments and try again
-- Consider upgrading your API plan for higher limits
-
-### Images not saving
-- Check that OUTPUT_DIR exists and is writable
-- Verify you have sufficient disk space
-- Create the directory manually: `mkdir -p /path/to/your/images`
-
-## 🤝 Contributing
-
-Contributions are welcome! This project combines the best features from multiple MCP servers:
-- mcp-image (TypeScript): Prompt enhancement and editing features
-- nanobanana-mcp-server (Python): Architecture and FastMCP integration
-- gemini-imagen-mcp-server (TypeScript): Imagen API support and batch processing
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-Built on the excellent work of:
-- [mcp-image](https://github.com/shinpr/mcp-image) - Prompt enhancement concept
-- [nanobanana-mcp-server](https://github.com/zhongweili/nanobanana-mcp-server) - FastMCP architecture
-- [gemini-imagen-mcp-server](https://github.com/serkanhaslak/gemini-imagen-mcp-server) - Imagen integration
-
-## 🔗 Links
-
-- [Google AI Studio](https://makersuite.google.com/app/apikey) - Get your API key
-- [Gemini API Documentation](https://ai.google.dev/gemini-api/docs)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
+Images are saved to `~/gemini_images` by default. Add `"OUTPUT_DIR": "/your/path"` to customize.
 
 ---
 
-**Ready to create amazing AI-generated images?** Install now and start generating! 🚀
+## Tools
+
+### `generate_image`
+
+Generate an image with Gemini 3 Pro Image.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `prompt` | string | required | Text description. Use full sentences, not keyword lists. |
+| `model` | string | `gemini-3-pro-image-preview` | Model to use (currently only one supported) |
+| `enhance_prompt` | bool | `false` | Auto-enhance prompt using Gemini Flash before generation |
+| `aspect_ratio` | string | `1:1` | One of: `1:1` `2:3` `3:2` `3:4` `4:3` `4:5` `5:4` `9:16` `16:9` `21:9` |
+| `image_size` | string | `2K` | `1K`, `2K`, or `4K` — **must be uppercase K** |
+| `output_format` | string | `png` | `png`, `jpeg`, or `webp` |
+| `reference_image_paths` | list | `[]` | Up to 14 local image paths (max 6 objects + max 5 humans) |
+| `enable_google_search` | bool | `false` | Ground generation in real-time Google Search data |
+| `response_modalities` | list | `["TEXT","IMAGE"]` | `["TEXT","IMAGE"]`, `["IMAGE"]`, or `["TEXT"]` |
+
+**Image size guide:**
+- `1K` — fast, good for testing (~1-2 MB)
+- `2K` — recommended for most use cases (~3-5 MB)
+- `4K` — maximum quality for production assets (~8-15 MB)
+
+---
+
+### `batch_generate`
+
+Generate multiple images in parallel.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `prompts` | list | required | List of prompt strings (max 8) |
+| `model` | string | `gemini-3-pro-image-preview` | Model for all images |
+| `enhance_prompt` | bool | `true` | Enhance all prompts before generation |
+| `aspect_ratio` | string | `1:1` | Aspect ratio applied to all images |
+| `image_size` | string | `2K` | Resolution for all images |
+| `output_format` | string | `png` | Format for all images |
+| `response_modalities` | list | `["TEXT","IMAGE"]` | Modalities for all images |
+| `batch_size` | int | `8` | Max concurrent requests |
+
+---
+
+## MCP Prompt Templates
+
+22 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`.
+
+| Command | Description | Default aspect ratio |
+|---------|-------------|----------------------|
+| `photography_shot` | Photorealistic shot with lens/lighting specs | 16:9 |
+| `logo_design` | Professional brand identity | 1:1, 4K, IMAGE only |
+| `cinematic_scene` | Film still with cinematography language | 21:9 |
+| `product_mockup` | Commercial e-commerce photography | 1:1 or 4:5 |
+| `batch_storyboard` | Multi-scene storyboard → calls `batch_generate` | 16:9 |
+| `macro_shot` | Extreme macro with micro-snoot lighting | 1:1 |
+| `fashion_portrait` | Editorial fashion with gobo shadow patterns | 4:5 |
+| `technical_cutaway` | Stephen Biesty-style cutaway diagram | 3:2, 4K, IMAGE only |
+| `flat_lay` | Overhead knolling photography | 1:1 |
+| `action_freeze` | High-speed strobe with motion blur background | 16:9 |
+| `night_street` | Moody night street with practical light sources | 16:9 |
+| `drone_aerial` | Straight-down golden hour aerial | 4:5, 4K, IMAGE only |
+| `stylized_3d_render` | UE5-style render with subsurface scattering | 1:1, IMAGE only |
+| `sem_microscopy` | Scanning electron microscope false-color | 1:1, IMAGE only |
+| `double_exposure` | Silhouette-blended double exposure | 2:3, IMAGE only |
+| `architectural_viz` | Ray-traced architectural visualization | 3:2, 4K |
+| `isometric_illustration` | Orthographic isometric 3D illustration | 1:1, IMAGE only |
+| `food_photography` | High-end backlit food photography | 4:5 |
+| `motion_blur` | Rear-curtain sync slow shutter sequence | 16:9 |
+| `typography_physical` | Text embedded in physical environment | 16:9, 4K, IMAGE only |
+| `retro_futurism` | 1970s cassette-futurism analog sci-fi | 4:3, IMAGE only |
+| `surreal_dreamscape` | Surrealist impossible physics scene | 1:1, IMAGE only |
+| `character_sheet` | Video game character concept art sheet | 3:2, 4K, IMAGE only |
+| `pbr_texture` | Seamless PBR texture map with raking light | 1:1, IMAGE only |
+| `historical_photo` | Period-accurate photography with film emulation | 4:5 |
+| `bioluminescent_nature` | Long-exposure bioluminescence macro | 1:1 |
+| `silhouette_shot` | Cinematic pure-black silhouette master shot | 21:9, 4K |
+
+---
+
+## Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GEMINI_API_KEY` | — | **Required.** Google Gemini API key |
+| `OUTPUT_DIR` | `~/gemini_images` | Directory where images are saved |
+| `DEFAULT_IMAGE_SIZE` | `2K` | Default resolution (`1K`, `2K`, `4K`) |
+| `DEFAULT_MODEL` | `gemini-3-pro-image-preview` | Default model |
+| `ENABLE_PROMPT_ENHANCEMENT` | `false` | Auto-enhance prompts by default |
+| `ENABLE_GOOGLE_SEARCH` | `false` | Enable Google Search grounding by default |
+| `REQUEST_TIMEOUT` | `60` | API timeout in seconds |
+| `MAX_BATCH_SIZE` | `8` | Max parallel requests in batch mode |
+| `LOG_LEVEL` | `INFO` | Logging level |
+
+---
+
+## Troubleshooting
+
+**`spawn uvx ENOENT`** — Claude Desktop can't find `uvx`. Use the full path:
+```json
+"command": "/Users/yourusername/.local/bin/uvx"
+```
+Find it with: `which uvx`
+
+**`GEMINI_API_KEY not found`** — Set the key in your MCP config `env` block or in a `.env` file. Get a free key at [Google AI Studio](https://makersuite.google.com/app/apikey).
+
+**`Content blocked by safety filters`** — Rephrase the prompt to avoid sensitive content.
+
+**`Rate limit exceeded`** — Wait and retry, or upgrade your API quota.
+
+**Images not saving** — Check `OUTPUT_DIR` exists and is writable: `mkdir -p /your/output/path`.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
+
+## Links
+
+- [Google AI Studio](https://makersuite.google.com/app/apikey) — Get your API key
+- [Gemini API Docs](https://ai.google.dev/gemini-api/docs)
+- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [FastMCP](https://github.com/jlowin/fastmcp)
