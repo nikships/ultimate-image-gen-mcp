@@ -6,7 +6,7 @@ high-resolution output (1K-4K), reference images, Google Search grounding,
 thinking mode, prompt enhancement, and batch processing.
 """
 
-__version__ = "3.0.15"
+__version__ = "3.0.16"
 __author__ = "Ultimate Gemini MCP"
 
 from .config import get_settings
