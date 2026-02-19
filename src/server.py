@@ -14,7 +14,7 @@ import sys
 from fastmcp import FastMCP
 
 from .config import ALL_MODELS, get_settings
-from .tools import register_batch_generate_tool, register_generate_image_tool
+from .tools import batch_generate, generate_image
 
 # Set up logging
 logging.basicConfig(
@@ -49,8 +49,8 @@ def create_app() -> FastMCP:
         )
 
         # Register tools
-        register_generate_image_tool(mcp)
-        register_batch_generate_tool(mcp)
+        mcp.add_tool(generate_image)
+        mcp.add_tool(batch_generate)
 
         # Add resources
         @mcp.resource("models://list")
