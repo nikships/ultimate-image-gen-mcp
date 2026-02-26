@@ -1,10 +1,10 @@
 [project]
 name = "ultimate-gemini-mcp"
 version = "5.0.4"
-description = "Gemini 3 Pro Image MCP server with advanced features: high-resolution output (1K-4K), reference images (up to 14), Google Search grounding, and thinking mode"
+description = "Gemini 3.1 Flash Image MCP server - fast image generation with advanced reasoning, 512px-4K resolution, up to 14 reference images, Google Search grounding, and configurable thinking mode"
 readme = "README.md"
 requires-python = ">=3.11"
-keywords = [ "mcp", "gemini", "gemini-3-pro-image", "image-generation", "ai", "google-ai", "fastmcp", "claude",]
+keywords = [ "mcp", "gemini", "gemini-3-1-flash-image", "image-generation", "ai", "google-ai", "fastmcp", "claude",]
 classifiers = [ "Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Topic :: Software Development :: Libraries :: Python Modules", "Topic :: Scientific/Engineering :: Artificial Intelligence",]
 dependencies = [ "fastmcp>=3.0,<4", "google-genai>=1.65.0", "pillow>=10.4.0", "pydantic>=2.0.0", "pydantic-settings>=2.0.0",]
 [[project.authors]]
