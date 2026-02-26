@@ -96,7 +96,7 @@ class GeminiClient:
             if thinking_level or include_thoughts is not None:
                 config_args["thinking_config"] = types.ThinkingConfig(
                     thinking_level=thinking_level.title() if thinking_level else None,
-                    include_thoughts=include_thoughts
+                    include_thoughts=include_thoughts,
                 )
 
             # Search Tools
@@ -159,7 +159,9 @@ class GeminiClient:
                 "model": model,
             }
 
-            if (enable_google_search or enable_image_search) and hasattr(response, "grounding_metadata"):
+            if (enable_google_search or enable_image_search) and hasattr(
+                response, "grounding_metadata"
+            ):
                 result["grounding_metadata"] = response.grounding_metadata
 
             return result

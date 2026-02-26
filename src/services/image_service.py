@@ -96,7 +96,9 @@ class ImageService:
             model = "gemini-3.1-flash-image-preview"
 
         if model not in GEMINI_MODELS:
-            raise ValueError(f"Unknown model: {model}. Supported: {', '.join(GEMINI_MODELS.keys())}")
+            raise ValueError(
+                f"Unknown model: {model}. Supported: {', '.join(GEMINI_MODELS.keys())}"
+            )
 
         original_prompt = prompt
 
