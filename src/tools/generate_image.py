@@ -1,8 +1,8 @@
 """
-Image generation tool for Gemini 3.1 Flash Image and Gemini 3 Pro Image.
+Image generation tool for Gemini 3.1 Flash Image.
 
 This module provides MCP tools for professional image generation using Google's
-Gemini 3 models with advanced reasoning, high-resolution output (512px-4K),
+Gemini 3.1 Flash Image with advanced reasoning, high-resolution output (512px-4K),
 reference image support, Google Search grounding (Web & Image), and thinking mode.
 """
 
@@ -17,7 +17,6 @@ from ..core import (
     validate_aspect_ratio,
     validate_image_format,
     validate_image_size,
-    validate_model,
     validate_prompt,
 )
 from ..services import ImageService
@@ -27,52 +26,42 @@ logger = logging.getLogger(__name__)
 
 async def generate_image_tool(
     prompt: str,
-    model: str | None = None,
-    enhance_prompt: bool = False,
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
     reference_image_paths: list[str] | None = None,
     enable_google_search: bool = False,
     enable_image_search: bool = False,
-    thinking_level: str | None = None,
-    include_thoughts: bool = True,
     response_modalities: list[str] | None = None,
+    thinking_level: str = "minimal",
     save_to_disk: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
-    Generate images using Gemini 3.1 Flash Image or Gemini 3 Pro Image.
+    Generate images using Gemini 3.1 Flash Image.
 
     Args:
         prompt: Text description for image generation
-        model: Model to use (default: gemini-3.1-flash-image-preview)
-        enhance_prompt: Automatically enhance prompt for better results (default: False)
         aspect_ratio: Image aspect ratio (1:1, 16:9, 9:16, etc.)
         image_size: Image resolution: 512px, 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
         reference_image_paths: Paths to reference images (up to 14)
         enable_google_search: Use Google Web Search for real-time data grounding
-        enable_image_search: Use Google Image Search for visual context (3.1 Flash only)
-        thinking_level: "minimal" or "high" (only for Gemini 3.1 Flash)
-        include_thoughts: Whether to return thinking process (default: True)
+        enable_image_search: Use Google Image Search for visual context
         response_modalities: Response types (TEXT, IMAGE - default: both)
+        thinking_level: Thinking level - "minimal" or "high" (default: minimal)
         save_to_disk: Save images to output directory
 
     Returns:
         Dict with generated images and metadata
     """
     validate_prompt(prompt)
-    if model:
-        validate_model(model)
     validate_aspect_ratio(aspect_ratio)
-    image_size = validate_image_size(image_size)  # Normalizes input
+    image_size = validate_image_size(image_size)
     validate_image_format(output_format)
 
     settings = get_settings()
-
-    if model is None:
-        model = settings.api.default_model
+    model = settings.api.default_model
 
     image_service = ImageService(
         api_key=settings.api.gemini_api_key,
@@ -84,8 +73,6 @@ async def generate_image_tool(
         params: dict[str, Any] = {
             "aspect_ratio": aspect_ratio,
             "image_size": image_size,
-            "thinking_level": thinking_level,
-            "include_thoughts": include_thoughts,
         }
 
         if reference_image_paths:
@@ -108,10 +95,11 @@ async def generate_image_tool(
         if response_modalities:
             params["response_modalities"] = response_modalities
 
+        params["thinking_level"] = thinking_level
+
         results = await image_service.generate(
             prompt=prompt,
             model=model,
-            enhance_prompt=enhance_prompt and settings.api.enable_prompt_enhancement,
             **params,
         )
 
@@ -122,10 +110,8 @@ async def generate_image_tool(
             "images_generated": len(results),
             "images": [],
             "metadata": {
-                "enhance_prompt": enhance_prompt,
                 "aspect_ratio": aspect_ratio,
                 "thinking_level": thinking_level,
-                "include_thoughts": include_thoughts,
             },
         }
 
@@ -158,34 +144,30 @@ def register_generate_image_tool(mcp_server: Any) -> None:
     @mcp_server.tool(timeout=120.0)
     async def generate_image(
         prompt: str,
-        model: str = "gemini-3.1-flash-image-preview",
-        enhance_prompt: bool = False,
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
         reference_image_paths: list[str] | None = None,
         enable_google_search: bool = False,
         enable_image_search: bool = False,
-        thinking_level: str | None = None,
-        include_thoughts: bool = True,
         response_modalities: list[str] | None = None,
+        thinking_level: str = "minimal",
     ) -> str:
         """
         ═══════════════════════════════════════════════════════════════════════════════
-        🎨 GEMINI 3 IMAGE GENERATION (Flash 3.1 & Pro 3)
+        🎨 GEMINI 3.1 FLASH IMAGE GENERATION
         ═══════════════════════════════════════════════════════════════════════════════
 
         Supports:
         • Gemini 3.1 Flash Image (Nano Banana 2) - Fast, high-volume, 512px-4K
-        • Gemini 3 Pro Image (Nano Banana Pro) - Professional quality, advanced reasoning
 
         🌟 KEY CAPABILITIES:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         ✓ High-Resolution Output: 512px, 1K, 2K, 4K
         ✓ Advanced Text Rendering: Legible text in logos, diagrams, menus
         ✓ Reference Images: Up to 14 images (10 objects, 4 characters)
-        ✓ Grounding: Google Web Search & Image Search (3.1 Flash only)
-        ✓ Thinking Mode: Reasoning process visible (configurable in 3.1 Flash)
+        ✓ Grounding: Google Web Search & Image Search
+        ✓ Thinking Mode: Configurable reasoning (minimal or high)
         ✓ SynthID Watermarking: Invisible watermark on all images
 
 
@@ -194,10 +176,6 @@ def register_generate_image_tool(mcp_server: Any) -> None:
 
         ► prompt (required, str):
           The text description. Be descriptive and specific.
-
-        ► model (optional, str, default: "gemini-3.1-flash-image-preview"):
-          • "gemini-3.1-flash-image-preview" (Default): Fast, supports Image Search & Thinking control
-          • "gemini-3-pro-image-preview": Highest quality, deep reasoning
 
         ► aspect_ratio (optional, str, default: "1:1"):
           OPTIONS: "1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4",
@@ -211,31 +189,26 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ► output_format: "png" (default), "jpeg", "webp"
 
         ► reference_image_paths (optional, list[str]):
-          Paths to up to 14 reference images (style, character, object).
+          Paths to up to 14 reference images (10 objects + 4 characters).
 
         ► enable_google_search (optional, bool, default: False):
           Enable Google Web Search for real-time data grounding (weather, stocks, news).
 
         ► enable_image_search (optional, bool, default: False):
-          Enable Google Image Search for visual context (3.1 Flash only).
-          Example: "Visualize a Timareta butterfly resting on a flower" (model finds real images of the butterfly).
+          Enable Google Image Search for visual context.
+          Example: "Visualize a butterfly resting on a flower" (model finds real images).
 
-        ► thinking_level (optional, str):
-          Only for Gemini 3.1 Flash. Control reasoning depth.
-          OPTIONS: "minimal" (default), "high"
-
-        ► include_thoughts (optional, bool, default: True):
-          Whether to return the model's thinking process in the response.
-
-        ► enhance_prompt (optional, bool, default: False):
-          Use Gemini Flash to rewrite simple prompts into detailed descriptions.
+        ► thinking_level (optional, str, default: "minimal"):
+          Controls reasoning effort: "minimal" (fast) or "high" (best quality, slower).
 
 
         🧠 THINKING MODE:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        Gemini 3 models "think" before generating to refine composition.
-        • Gemini 3 Pro: Thinking is always on.
-        • Gemini 3.1 Flash: You can control level ("minimal", "high").
+        Gemini 3.1 Flash uses reasoning to refine composition before generating.
+        Use thinking_level to balance quality vs latency:
+        • minimal: Fastest, basic prompts
+        • high: Best quality for complex prompts, slower
+
 
 
         📤 RESPONSE FORMAT:
@@ -250,7 +223,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
             }
           ],
           "metadata": {
-            "thoughts": [...],
+            "thinking_level": "minimal",
             "grounding_metadata": {...}
           }
         }
@@ -263,22 +236,18 @@ def register_generate_image_tool(mcp_server: Any) -> None:
            - macOS: `open "/path/to/image.png"`
            - Linux: `xdg-open "/path/to/image.png"`
            - Windows: `start "" "/path/to/image.png"`
-        4. Show thoughts if available.
         """
         try:
             result = await generate_image_tool(
                 prompt=prompt,
-                model=model,
-                enhance_prompt=enhance_prompt,
                 aspect_ratio=aspect_ratio,
                 image_size=image_size,
                 output_format=output_format,
                 reference_image_paths=reference_image_paths,
                 enable_google_search=enable_google_search,
                 enable_image_search=enable_image_search,
-                thinking_level=thinking_level,
-                include_thoughts=include_thoughts,
                 response_modalities=response_modalities,
+                thinking_level=thinking_level,
             )
 
             return json.dumps(result, indent=2)

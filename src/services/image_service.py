@@ -1,4 +1,4 @@
-"""Image service for Gemini 3 Pro Image generation."""
+"""Image service for Gemini 3.1 Flash Image generation."""
 
 import base64
 import logging
@@ -57,7 +57,7 @@ class ImageResult:
 
 
 class ImageService:
-    """Orchestrates image generation using Gemini 3 Pro Image."""
+    """Orchestrates image generation using Gemini 3.1 Flash Image."""
 
     def __init__(self, api_key: str, *, enable_enhancement: bool = True, timeout: int = 60) -> None:
         self.enable_enhancement = enable_enhancement
@@ -72,20 +72,16 @@ class ImageService:
         *,
         model: str | None = None,
         enhance_prompt: bool = True,
-        thinking_level: str | None = None,
-        include_thoughts: bool = True,
         enable_image_search: bool = False,
         **kwargs: Any,
     ) -> list[ImageResult]:
         """
-        Generate images using Gemini 3 Pro Image or Gemini 3.1 Flash Image.
+        Generate images using Gemini 3.1 Flash Image.
 
         Args:
             prompt: Text prompt for image generation
             model: Model to use (default: gemini-3.1-flash-image-preview)
             enhance_prompt: Whether to enhance the prompt before generation
-            thinking_level: "minimal" or "high" (only for Gemini 3.1 Flash)
-            include_thoughts: Whether to return thinking process (default: True)
             enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
             **kwargs: Additional parameters (aspect_ratio, reference_images, etc.)
 
@@ -115,8 +111,6 @@ class ImageService:
         response = await self.gemini_client.generate_image(
             prompt=prompt,
             model=model,
-            thinking_level=thinking_level,
-            include_thoughts=include_thoughts,
             enable_image_search=enable_image_search,
             **kwargs,
         )
@@ -129,8 +123,6 @@ class ImageService:
                 index=i,
                 metadata={
                     "enhanced_prompt": prompt,
-                    "thinking_level": thinking_level,
-                    "include_thoughts": include_thoughts,
                     "enable_image_search": enable_image_search,
                     **kwargs,
                 },

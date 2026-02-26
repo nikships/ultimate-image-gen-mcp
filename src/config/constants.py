@@ -1,11 +1,10 @@
-"""Constants for the Gemini 3 Pro Image MCP server."""
+"""Constants for the Gemini 3.1 Flash Image MCP server."""
 
 from pathlib import Path
 
-# Supported models: gemini-3-pro-image-preview for generation, gemini-flash-latest for enhancement
+# Supported models
 GEMINI_MODELS = {
     "gemini-3.1-flash-image-preview": "gemini-3.1-flash-image-preview",
-    "gemini-3-pro-image-preview": "gemini-3-pro-image-preview",
     "gemini-flash-latest": "gemini-flash-latest",
 }
 
@@ -44,10 +43,13 @@ IMAGE_SIZES = ["512px", "1K", "2K", "4K"]
 DEFAULT_IMAGE_SIZE = "2K"
 
 MAX_REFERENCE_IMAGES = 14
-MAX_OBJECT_IMAGES = 6
-MAX_HUMAN_IMAGES = 5
+MAX_OBJECT_IMAGES = 10
+MAX_HUMAN_IMAGES = 4
 
 RESPONSE_MODALITIES = ["TEXT", "IMAGE"]
+
+THINKING_LEVELS = ["minimal", "high"]
+DEFAULT_THINKING_LEVEL = "minimal"
 
 MAX_BATCH_SIZE = 8
 MAX_PROMPT_LENGTH = 8192

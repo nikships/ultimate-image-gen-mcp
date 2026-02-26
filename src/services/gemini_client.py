@@ -11,7 +11,7 @@ from google import genai
 from google.genai import types
 from PIL import Image
 
-from ..config.constants import GEMINI_MODELS
+from ..config.constants import DEFAULT_THINKING_LEVEL, GEMINI_MODELS
 from ..core.exceptions import (
     APIError,
     AuthenticationError,
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiClient:
-    """Client for Gemini 3 Pro Image API using the official Google GenAI SDK."""
+    """Client for Gemini 3.1 Flash Image API using the official Google GenAI SDK."""
 
     def __init__(self, api_key: str, timeout: int = 60) -> None:
         self.api_key = api_key
@@ -41,12 +41,11 @@ class GeminiClient:
         response_modalities: list[str] | None = None,
         enable_google_search: bool = False,
         enable_image_search: bool = False,
-        thinking_level: str | None = None,
-        include_thoughts: bool = True,
+        thinking_level: str = DEFAULT_THINKING_LEVEL,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Generate an image using Gemini 3 Pro Image or Gemini 3.1 Flash Image.
+        Generate an image using Gemini 3.1 Flash Image.
 
         Args:
             prompt: Text prompt for image generation
@@ -56,9 +55,8 @@ class GeminiClient:
             image_size: Image resolution - 512px, 1K, 2K, or 4K (default: 2K)
             response_modalities: Response types (default: ["TEXT", "IMAGE"])
             enable_google_search: Enable Google Search grounding for real-time data
-            enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
-            thinking_level: "minimal" or "high" (only for Gemini 3.1 Flash)
-            include_thoughts: Whether to return thinking process (default: True)
+            enable_image_search: Enable Google Image Search for visual context
+            thinking_level: Thinking level - "minimal" or "high" (default: minimal)
             **kwargs: Additional parameters
 
         Returns:
@@ -92,25 +90,28 @@ class GeminiClient:
                 "image_config": image_config,
             }
 
-            # Thinking Config
-            if thinking_level or include_thoughts is not None:
-                config_args["thinking_config"] = types.ThinkingConfig(
-                    thinking_level=thinking_level.title() if thinking_level else None,
-                    include_thoughts=include_thoughts,
-                )
+            # Thinking Config - minimal or high
+            thinking_level_map = {
+                "minimal": types.ThinkingLevel.MINIMAL,
+                "high": types.ThinkingLevel.HIGH,
+            }
+            config_args["thinking_config"] = types.ThinkingConfig(
+                thinking_level=thinking_level_map.get(
+                    thinking_level.lower(), types.ThinkingLevel.MINIMAL
+                ),
+            )
 
             # Search Tools
             if enable_google_search or enable_image_search:
-                search_types_kwargs = {}
-                if enable_google_search:
-                    search_types_kwargs["web_search"] = types.WebSearch()
-                if enable_image_search:
-                    search_types_kwargs["image_search"] = types.ImageSearch()
-
-                search_types = types.SearchTypes(**search_types_kwargs)
-
                 config_args["tools"] = [
-                    types.Tool(google_search=types.GoogleSearch(search_types=search_types))
+                    types.Tool(
+                        google_search=types.GoogleSearch(
+                            search_types=types.SearchTypes(
+                                web_search=types.WebSearch() if enable_google_search else None,
+                                image_search=types.ImageSearch() if enable_image_search else None,
+                            )
+                        )
+                    )
                 ]
 
             config = types.GenerateContentConfig(**config_args)
