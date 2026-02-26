@@ -1,4 +1,4 @@
-"""Image service for Gemini 3 Pro Image generation."""
+"""Image service for Gemini 3.1 Flash Image generation."""
 
 import base64
 import logging
@@ -57,7 +57,7 @@ class ImageResult:
 
 
 class ImageService:
-    """Orchestrates image generation using Gemini 3 Pro Image."""
+    """Orchestrates image generation using Gemini 3.1 Flash Image."""
 
     def __init__(self, api_key: str, *, enable_enhancement: bool = True, timeout: int = 60) -> None:
         self.enable_enhancement = enable_enhancement
@@ -67,25 +67,34 @@ class ImageService:
         )
 
     async def generate(
-        self, prompt: str, *, model: str | None = None, enhance_prompt: bool = True, **kwargs: Any
+        self,
+        prompt: str,
+        *,
+        model: str | None = None,
+        enhance_prompt: bool = True,
+        enable_image_search: bool = False,
+        **kwargs: Any,
     ) -> list[ImageResult]:
         """
-        Generate images using Gemini 3 Pro Image.
+        Generate images using Gemini 3.1 Flash Image.
 
         Args:
             prompt: Text prompt for image generation
-            model: Model to use (default: gemini-3-pro-image-preview)
+            model: Model to use (default: gemini-3.1-flash-image-preview)
             enhance_prompt: Whether to enhance the prompt before generation
+            enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
             **kwargs: Additional parameters (aspect_ratio, reference_images, etc.)
 
         Returns:
             List of ImageResult objects
         """
         if model is None:
-            model = "gemini-3-pro-image-preview"
+            model = "gemini-3.1-flash-image-preview"
 
         if model not in GEMINI_MODELS:
-            raise ValueError(f"Unknown model: {model}. Only Gemini 3 Pro Image is supported.")
+            raise ValueError(
+                f"Unknown model: {model}. Supported: {', '.join(GEMINI_MODELS.keys())}"
+            )
 
         original_prompt = prompt
 
@@ -99,7 +108,12 @@ class ImageService:
             except Exception as e:
                 logger.warning(f"Prompt enhancement failed, using original: {e}")
 
-        response = await self.gemini_client.generate_image(prompt=prompt, model=model, **kwargs)
+        response = await self.gemini_client.generate_image(
+            prompt=prompt,
+            model=model,
+            enable_image_search=enable_image_search,
+            **kwargs,
+        )
 
         return [
             ImageResult(
@@ -107,7 +121,11 @@ class ImageService:
                 prompt=original_prompt,
                 model=model,
                 index=i,
-                metadata={"enhanced_prompt": prompt, **kwargs},
+                metadata={
+                    "enhanced_prompt": prompt,
+                    "enable_image_search": enable_image_search,
+                    **kwargs,
+                },
             )
             for i, image_data in enumerate(response["images"])
         ]

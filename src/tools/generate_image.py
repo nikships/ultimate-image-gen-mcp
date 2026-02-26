@@ -1,9 +1,9 @@
 """
-Image generation tool for Gemini 3 Pro Image (Nano Banana Pro).
+Image generation tool for Gemini 3.1 Flash Image.
 
 This module provides MCP tools for professional image generation using Google's
-Gemini 3 Pro Image Preview model with advanced reasoning, high-resolution output
-(1K-4K), reference image support (up to 14), Google Search grounding, and thinking mode.
+Gemini 3.1 Flash Image with advanced reasoning, high-resolution output (512px-4K),
+reference image support, Google Search grounding (Web & Image), and thinking mode.
 """
 
 import base64
@@ -17,7 +17,6 @@ from ..core import (
     validate_aspect_ratio,
     validate_image_format,
     validate_image_size,
-    validate_model,
     validate_prompt,
 )
 from ..services import ImageService
@@ -27,46 +26,42 @@ logger = logging.getLogger(__name__)
 
 async def generate_image_tool(
     prompt: str,
-    model: str | None = None,
-    enhance_prompt: bool = False,
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
     reference_image_paths: list[str] | None = None,
     enable_google_search: bool = False,
+    enable_image_search: bool = False,
     response_modalities: list[str] | None = None,
+    thinking_level: str = "minimal",
     save_to_disk: bool = True,
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
-    Generate images using Gemini 3 Pro Image.
+    Generate images using Gemini 3.1 Flash Image.
 
     Args:
         prompt: Text description for image generation
-        model: Model to use (default: gemini-3-pro-image-preview)
-        enhance_prompt: Automatically enhance prompt for better results (default: False)
         aspect_ratio: Image aspect ratio (1:1, 16:9, 9:16, etc.)
-        image_size: Image resolution: 1K, 2K, or 4K (default: 2K)
+        image_size: Image resolution: 512px, 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
         reference_image_paths: Paths to reference images (up to 14)
-        enable_google_search: Use Google Search for real-time data grounding
+        enable_google_search: Use Google Web Search for real-time data grounding
+        enable_image_search: Use Google Image Search for visual context
         response_modalities: Response types (TEXT, IMAGE - default: both)
+        thinking_level: Thinking level - "minimal" or "high" (default: minimal)
         save_to_disk: Save images to output directory
 
     Returns:
         Dict with generated images and metadata
     """
     validate_prompt(prompt)
-    if model:
-        validate_model(model)
     validate_aspect_ratio(aspect_ratio)
-    image_size = validate_image_size(image_size)  # Normalizes to uppercase 'K'
+    image_size = validate_image_size(image_size)
     validate_image_format(output_format)
 
     settings = get_settings()
-
-    if model is None:
-        model = settings.api.default_model
+    model = settings.api.default_model
 
     image_service = ImageService(
         api_key=settings.api.gemini_api_key,
@@ -94,13 +89,17 @@ async def generate_image_tool(
         if enable_google_search:
             params["enable_google_search"] = True
 
+        if enable_image_search:
+            params["enable_image_search"] = True
+
         if response_modalities:
             params["response_modalities"] = response_modalities
+
+        params["thinking_level"] = thinking_level
 
         results = await image_service.generate(
             prompt=prompt,
             model=model,
-            enhance_prompt=enhance_prompt and settings.api.enable_prompt_enhancement,
             **params,
         )
 
@@ -111,8 +110,8 @@ async def generate_image_tool(
             "images_generated": len(results),
             "images": [],
             "metadata": {
-                "enhance_prompt": enhance_prompt,
                 "aspect_ratio": aspect_ratio,
+                "thinking_level": thinking_level,
             },
         }
 
@@ -145,234 +144,71 @@ def register_generate_image_tool(mcp_server: Any) -> None:
     @mcp_server.tool(timeout=120.0)
     async def generate_image(
         prompt: str,
-        model: str | None = None,
-        enhance_prompt: bool = False,
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
         reference_image_paths: list[str] | None = None,
         enable_google_search: bool = False,
+        enable_image_search: bool = False,
         response_modalities: list[str] | None = None,
+        thinking_level: str = "minimal",
     ) -> str:
         """
         ═══════════════════════════════════════════════════════════════════════════════
-        🎨 GEMINI 3 PRO IMAGE - Professional Image Generation with Advanced Reasoning
+        🎨 GEMINI 3.1 FLASH IMAGE GENERATION
         ═══════════════════════════════════════════════════════════════════════════════
 
-        Gemini 3 Pro Image (aka "Nano Banana Pro") is Google's state-of-the-art image
-        generation model optimized for professional asset production. It uses advanced
-        reasoning through "Thinking Mode" to refine composition before generating the
-        final high-quality output.
+        Supports:
+        • Gemini 3.1 Flash Image (Nano Banana 2) - Fast, high-volume, 512px-4K
 
         🌟 KEY CAPABILITIES:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        ✓ High-Resolution Output: Built-in 1K, 2K, and 4K generation
-        ✓ Advanced Text Rendering: Legible, stylized text in infographics, menus, logos
-        ✓ Reference Images: Up to 14 images (6 objects + 5 humans) for consistency
-        ✓ Google Search Grounding: Real-time data (weather, stocks, events, maps)
-        ✓ Thinking Mode: Generates interim "thought images" to refine composition
-        ✓ Multi-turn Editing: Conversational refinement over multiple turns
-        ✓ SynthID Watermarking: All images include invisible SynthID watermark
+        ✓ High-Resolution Output: 512px, 1K, 2K, 4K
+        ✓ Advanced Text Rendering: Legible text in logos, diagrams, menus
+        ✓ Reference Images: Up to 14 images (10 objects, 4 characters)
+        ✓ Grounding: Google Web Search & Image Search
+        ✓ Thinking Mode: Configurable reasoning (minimal or high)
+        ✓ SynthID Watermarking: Invisible watermark on all images
 
 
         📋 PARAMETERS:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         ► prompt (required, str):
-          The text description of your desired image. For best results, use descriptive
-          narrative paragraphs rather than keyword lists.
-
-          PROMPTING BEST PRACTICES:
-          • "Describe the scene, don't just list keywords" - Use full sentences
-          • Be hyper-specific about details (lighting, camera angle, materials, mood)
-          • For photorealism: Use photography terms (e.g., "85mm portrait lens",
-            "soft bokeh", "golden hour lighting")
-          • For text in images: Explicitly state the exact text and font style
-          • For logos/branding: Describe style, colors, and placement in detail
-
-          Examples:
-          ✓ GOOD: "A photorealistic close-up portrait of an elderly Japanese ceramicist
-                   with deep wrinkles, inspecting a tea bowl in his rustic workshop.
-                   Soft golden hour light streaming through a window, captured with
-                   an 85mm lens creating soft bokeh background."
-          ✗ POOR: "old man with pottery"
-
-        ► model (optional, str, default: "gemini-3-pro-image-preview"):
-          Model to use. Currently only "gemini-3-pro-image-preview" is supported.
-          This is the default and recommended model for all image generation tasks.
-
-        ► enhance_prompt (optional, bool, default: False):
-          Automatically enhance your prompt using Gemini Flash for superior results.
-
-          ⚠️ ENHANCEMENT IS OFF BY DEFAULT to preserve user intent.
-
-          WHEN TO ENABLE (set to True):
-          • User explicitly requests prompt enhancement
-          • Your prompt is too simple/vague (e.g., "a cat" or "sunset")
-          • User wants more creative/detailed interpretation
-
-          DO NOT ENABLE FOR:
-          • Well-detailed prompts with specific requirements
-          • Technical/precise image requests (diagrams, infographics, UI mockups)
-          • When user wants exact control over composition
-
-          What it does: Transforms simple prompts into detailed, cinematic descriptions.
-          Example: "cat in space helmet" → "A photorealistic portrait of a domestic
-          tabby cat wearing a futuristic space helmet, close-up composition, warm
-          studio lighting, detailed fur texture, reflective visor..."
-
-          NOTE: Enhancement adds 2-5 seconds latency and uses Gemini Flash.
+          The text description. Be descriptive and specific.
 
         ► aspect_ratio (optional, str, default: "1:1"):
-          Image proportions. Choose based on your use case.
-
-          OPTIONS: "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"
-
-          USAGE GUIDE:
-          • "1:1" (Square) - Social media posts, profile pictures, logos
-          • "16:9" (Widescreen) - YouTube thumbnails, presentation slides, banners
-          • "9:16" (Vertical) - Instagram Stories, mobile wallpapers, TikTok
-          • "3:2" or "4:3" - Standard photography, prints
-          • "4:5" - Instagram feed posts (portrait)
-          • "21:9" (Ultrawide) - Cinematic scenes, panoramic views
+          OPTIONS: "1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4",
+                   "8:1", "9:16", "16:9", "21:9"
 
         ► image_size (optional, str, default: "2K"):
-          Resolution of the generated image. IMPORTANT: Must use uppercase 'K'.
+          OPTIONS: "512px", "1K", "2K", "4K"
+          • "512px": Fastest, lowest cost (0.5K)
+          • "2K": Recommended balance
 
-          OPTIONS: "1K", "2K", "4K" (lowercase like "1k" will be REJECTED)
-
-          RESOLUTION GUIDE:
-          • "1K" (~1024px) - Fast generation, testing, development iterations
-            Token cost: 1120 tokens
-            File size: ~1-2MB
-
-          • "2K" (~2048px) - RECOMMENDED for most professional use cases
-            Token cost: 1120 tokens
-            File size: ~3-5MB
-            Best balance of quality and speed
-
-          • "4K" (~4096px) - Maximum quality for production assets, print materials
-            Token cost: 2000 tokens (higher cost!)
-            File size: ~8-15MB
-            Use for: Final deliverables, large format prints, detailed artwork
-
-          PRO TIP: Start with 2K during iteration, then regenerate at 4K for final output.
-
-        ► output_format (optional, str, default: "png"):
-          Image file format.
-
-          OPTIONS: "png", "jpeg", "webp"
-
-          • "png" (recommended) - Lossless, supports transparency, best for logos/graphics
-          • "jpeg" - Smaller files, good for photos without transparency
-          • "webp" - Modern format, good compression
+        ► output_format: "png" (default), "jpeg", "webp"
 
         ► reference_image_paths (optional, list[str]):
-          Paths to reference images for style consistency and character preservation.
-
-          LIMITS:
-          • Up to 14 total reference images
-          • Maximum 6 object images (for high-fidelity inclusion of objects/items)
-          • Maximum 5 human images (for character/person consistency)
-
-          USE CASES:
-          ✓ Character Consistency: Provide photos of people to maintain their appearance
-          ✓ Style Transfer: Reference images to match artistic style or mood
-          ✓ Object Inclusion: Include specific products, logos, or items
-          ✓ Multi-person Compositions: Generate group photos with consistent faces
-          ✓ 360° Character Views: Generate different angles of the same character
-
-          Examples:
-          • Group photo: ["person1.jpg", "person2.jpg", "person3.jpg"]
-            Prompt: "An office group photo of these people making funny faces"
-
-          • Product mockup: ["product.png", "logo.png"]
-            Prompt: "Professional e-commerce photo of this product with the logo"
-
-          • Style reference: ["reference_art.jpg"]
-            Prompt: "Create a portrait in the artistic style of this reference image"
+          Paths to up to 14 reference images (10 objects + 4 characters).
 
         ► enable_google_search (optional, bool, default: False):
-          Enable real-time data grounding via Google Search.
+          Enable Google Web Search for real-time data grounding (weather, stocks, news).
 
-          WHEN TO USE:
-          ✓ Current events: "Visualize last night's Arsenal game in Champions League"
-          ✓ Weather forecasts: "5-day weather forecast for San Francisco as a chart"
-          ✓ Stock data: "Create an infographic of today's tech stock performance"
-          ✓ Real-time maps: "Show current traffic patterns in downtown Tokyo"
-          ✓ Recent news: "Illustrate yesterday's SpaceX launch"
+        ► enable_image_search (optional, bool, default: False):
+          Enable Google Image Search for visual context.
+          Example: "Visualize a butterfly resting on a flower" (model finds real images).
 
-          NOTE: Adds 1-3 seconds latency. Response includes `grounding_metadata` with
-          the top 3 web sources used. Image-based search results are excluded.
-
-        ► response_modalities (optional, list[str], default: ["TEXT", "IMAGE"]):
-          What the model should return.
-
-          OPTIONS:
-          • ["TEXT", "IMAGE"] (default) - Get both explanation and image
-          • ["IMAGE"] - Image only, no text description
-          • ["TEXT"] - Text only (unusual for image generation)
-
-          Most use cases should use the default for best results.
+        ► thinking_level (optional, str, default: "minimal"):
+          Controls reasoning effort: "minimal" (fast) or "high" (best quality, slower).
 
 
-        🧠 THINKING MODE (Automatic):
+        🧠 THINKING MODE:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        Gemini 3 Pro Image uses advanced reasoning for complex prompts. The model
-        generates up to 2 interim "thought images" to test composition and logic
-        before producing the final high-quality output. This feature is ENABLED BY
-        DEFAULT and cannot be disabled.
+        Gemini 3.1 Flash uses reasoning to refine composition before generating.
+        Use thinking_level to balance quality vs latency:
+        • minimal: Fastest, basic prompts
+        • high: Best quality for complex prompts, slower
 
-        The thinking process is visible in the response under the "thoughts" field.
-        You can show users the model's reasoning process if desired.
-
-
-        🏷️ SYNTHID WATERMARKING:
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        ALL generated images include an invisible SynthID watermark for authenticity
-        and provenance tracking. This is automatic and does not affect visual quality.
-
-
-        💡 PRACTICAL USE CASE EXAMPLES:
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-        1. PROFESSIONAL LOGO DESIGN:
-           prompt: "Create a modern, minimalist logo for a coffee shop called 'The
-                   Daily Grind'. Clean, bold sans-serif font in black on white.
-                   Circular design with a coffee bean integrated cleverly."
-           aspect_ratio: "1:1"
-           image_size: "4K"
-
-        2. REAL-TIME DATA VISUALIZATION:
-           prompt: "Visualize the current weather forecast for the next 5 days in
-                   San Francisco as a clean, modern weather chart with clothing
-                   recommendations for each day"
-           enable_google_search: True
-           aspect_ratio: "16:9"
-           image_size: "2K"
-
-        3. CHARACTER-CONSISTENT GROUP PHOTO:
-           prompt: "An office group photo of these people, they are making funny faces"
-           reference_image_paths: ["person1.jpg", "person2.jpg", "person3.jpg"]
-           aspect_ratio: "5:4"
-           image_size: "2K"
-
-        4. HIGH-FIDELITY TEXT RENDERING:
-           prompt: "Create a vibrant infographic explaining photosynthesis as a recipe
-                   for a plant's favorite food. Show ingredients (sunlight, water,
-                   CO2) and finished dish (sugar). Style like a colorful kids' cookbook
-                   for 4th graders."
-           aspect_ratio: "16:9"
-           image_size: "4K"
-           enable_google_search: True
-
-        5. PRODUCT MOCKUP WITH STYLE TRANSFER:
-           prompt: "Turn this rough pencil sketch of a futuristic car into a polished
-                   photo of the finished concept car in a showroom. Keep the sleek
-                   lines but add metallic blue paint and neon rim lighting."
-           reference_image_paths: ["car_sketch.png"]
-           image_size: "4K"
-           aspect_ratio: "16:9"
 
 
         📤 RESPONSE FORMAT:
@@ -380,78 +216,38 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         Returns JSON with:
         {
           "success": true,
-          "model": "gemini-3-pro-image-preview",
-          "prompt": "original prompt",
-          "images_generated": 1,
           "images": [
             {
-              "index": 0,
-              "path": "/full/path/to/generated_image.png",
-              "filename": "a-photorealistic-close-up-portrait-of-an-elderly-j-123456.png",
-              "size": 4567890,  // bytes
-              "timestamp": "2025-01-28T12:34:56.789012",
-              "enhanced_prompt": "enhanced version if enhancement was used"
+              "path": "/path/to/image.png",
+              "size": 12345
             }
           ],
           "metadata": {
-            "enhance_prompt": false,
-            "aspect_ratio": "16:9",
-            "thoughts": [...],  // if thinking mode generated interim images
-            "grounding_metadata": {...}  // if Google Search was enabled
+            "thinking_level": "minimal",
+            "grounding_metadata": {...}
           }
         }
 
-
         ⚠️ IMPORTANT - AI ASSISTANT INSTRUCTIONS:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        After generating an image, you MUST:
-
-        1. Parse the JSON response to extract the file path: result["images"][0]["path"]
-        2. Inform the user of the EXACT file path where the image was saved
-        3. Open the image in the native OS picture viewer using Bash (DO NOT use Read tool):
+        1. Parse JSON to get file path: result["images"][0]["path"]
+        2. Inform user of the EXACT file path.
+        3. Open image in native OS viewer using Bash:
            - macOS: `open "/path/to/image.png"`
            - Linux: `xdg-open "/path/to/image.png"`
            - Windows: `start "" "/path/to/image.png"`
-        4. If thoughts were generated, show the thinking process to the user
-        5. If Google Search was used, mention the grounding sources
-
-        Complete Workflow Example:
-        ```
-        1. Call generate_image tool with parameters
-        2. Parse response JSON to get file_path, thoughts, grounding_metadata
-        3. Tell user: "✓ Image saved to: /Users/name/gemini_images/gemini3_20250128_image.png"
-        4. If thoughts exist: "The model used thinking mode and generated 2 interim
-           compositions before the final image."
-        5. Call Bash to open image: `open "/Users/name/gemini_images/gemini3_20250128_image.png"`
-        ```
-
-        ❌ DO NOT just say "image generated successfully" without showing the path!
-        ❌ DO NOT use the Read tool to display the image - use native OS viewer instead!
-        ✓ DO open the image in the native picture viewer (open/xdg-open/start)
-        ✓ DO parse and show all relevant metadata to help users understand the generation
-
-
-        🚀 PERFORMANCE TIPS:
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        • Start with 2K during iteration, use 4K only for final output (saves tokens)
-        • Disable prompt enhancement if you have expert-level prompts (saves 2-5s)
-        • Use Google Search only when you actually need real-time data (saves 1-3s)
-        • Limit reference images to what you actually need (max 14, but fewer is faster)
-        • For testing: Use 1K resolution and enhance_prompt=False for fastest results
-
-        ═══════════════════════════════════════════════════════════════════════════════
         """
         try:
             result = await generate_image_tool(
                 prompt=prompt,
-                model=model,
-                enhance_prompt=enhance_prompt,
                 aspect_ratio=aspect_ratio,
                 image_size=image_size,
                 output_format=output_format,
                 reference_image_paths=reference_image_paths,
                 enable_google_search=enable_google_search,
+                enable_image_search=enable_image_search,
                 response_modalities=response_modalities,
+                thinking_level=thinking_level,
             )
 
             return json.dumps(result, indent=2)

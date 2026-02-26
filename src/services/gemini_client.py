@@ -11,7 +11,7 @@ from google import genai
 from google.genai import types
 from PIL import Image
 
-from ..config.constants import GEMINI_MODELS
+from ..config.constants import DEFAULT_THINKING_LEVEL, GEMINI_MODELS
 from ..core.exceptions import (
     APIError,
     AuthenticationError,
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class GeminiClient:
-    """Client for Gemini 3 Pro Image API using the official Google GenAI SDK."""
+    """Client for Gemini 3.1 Flash Image API using the official Google GenAI SDK."""
 
     def __init__(self, api_key: str, timeout: int = 60) -> None:
         self.api_key = api_key
@@ -34,25 +34,29 @@ class GeminiClient:
         self,
         prompt: str,
         *,
-        model: str = "gemini-3-pro-image-preview",
+        model: str = "gemini-3.1-flash-image-preview",
         reference_images: list[str] | None = None,
         aspect_ratio: str | None = None,
         image_size: str = "2K",
         response_modalities: list[str] | None = None,
         enable_google_search: bool = False,
+        enable_image_search: bool = False,
+        thinking_level: str = DEFAULT_THINKING_LEVEL,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Generate an image using Gemini 3 Pro Image.
+        Generate an image using Gemini 3.1 Flash Image.
 
         Args:
             prompt: Text prompt for image generation
-            model: Model to use (default: gemini-3-pro-image-preview)
+            model: Model to use (default: gemini-3.1-flash-image-preview)
             reference_images: Base64-encoded reference images (up to 14)
             aspect_ratio: Desired aspect ratio
-            image_size: Image resolution - 1K, 2K, or 4K (default: 2K)
+            image_size: Image resolution - 512px, 1K, 2K, or 4K (default: 2K)
             response_modalities: Response types (default: ["TEXT", "IMAGE"])
             enable_google_search: Enable Google Search grounding for real-time data
+            enable_image_search: Enable Google Image Search for visual context
+            thinking_level: Thinking level - "minimal" or "high" (default: minimal)
             **kwargs: Additional parameters
 
         Returns:
@@ -86,8 +90,29 @@ class GeminiClient:
                 "image_config": image_config,
             }
 
-            if enable_google_search:
-                config_args["tools"] = [{"google_search": {}}]
+            # Thinking Config - minimal or high
+            thinking_level_map = {
+                "minimal": types.ThinkingLevel.MINIMAL,
+                "high": types.ThinkingLevel.HIGH,
+            }
+            config_args["thinking_config"] = types.ThinkingConfig(
+                thinking_level=thinking_level_map.get(
+                    thinking_level.lower(), types.ThinkingLevel.MINIMAL
+                ),
+            )
+
+            # Search Tools
+            if enable_google_search or enable_image_search:
+                config_args["tools"] = [
+                    types.Tool(
+                        google_search=types.GoogleSearch(
+                            search_types=types.SearchTypes(
+                                web_search=types.WebSearch() if enable_google_search else None,
+                                image_search=types.ImageSearch() if enable_image_search else None,
+                            )
+                        )
+                    )
+                ]
 
             config = types.GenerateContentConfig(**config_args)
 
@@ -135,7 +160,9 @@ class GeminiClient:
                 "model": model,
             }
 
-            if enable_google_search and hasattr(response, "grounding_metadata"):
+            if (enable_google_search or enable_image_search) and hasattr(
+                response, "grounding_metadata"
+            ):
                 result["grounding_metadata"] = response.grounding_metadata
 
             return result
