@@ -2,7 +2,7 @@
 
 # Ultimate Gemini MCP
 
-> MCP server for Google's **Gemini 3 Pro Image Preview** — state-of-the-art image generation with advanced reasoning, 1K–4K resolution, up to 14 reference images, Google Search grounding, and automatic thinking mode.
+> MCP server for Google's **Gemini 3.1 Flash Image** — fast image generation with advanced reasoning, 512px–4K resolution, up to 14 reference images, Google Search grounding, and automatic thinking mode.
 
 **All generated images include invisible SynthID watermarks for authenticity and provenance tracking.**
 
@@ -10,53 +10,23 @@
 
 ## Features
 
-### Gemini 3 Pro Image
-- **High-Resolution Output**: 1K, 2K, and 4K resolution
+### Gemini 3.1 Flash Image
+- **High-Resolution Output**: 512px, 1K, 2K, and 4K resolution
 - **Advanced Text Rendering**: Legible, stylized text in infographics, menus, diagrams, and logos
-- **Up to 14 Reference Images**: Up to 6 object images + up to 5 human images for style/character consistency
+- **Up to 14 Reference Images**: Up to 10 objects + 4 characters for style/character consistency
 - **Google Search Grounding**: Real-time data (weather, stocks, events, maps)
-- **Thinking Mode**: Model reasons about composition before producing the final image (automatic, always on)
+- **Google Image Search**: Visual context from web images
+- **Thinking Mode**: Configurable reasoning - "minimal" (fast) or "high" (best quality)
 
 ### Server Features
-- **AI Prompt Enhancement**: Optionally auto-enhance prompts using Gemini Flash
 - **Batch Processing**: Generate multiple images in parallel (up to 8 concurrent)
 - **22 Expert Prompt Templates**: MCP slash commands for photography, logos, cinematics, storyboards, and more
-- **Flexible Aspect Ratios**: 10 options — 1:1, 16:9, 9:16, 3:2, 4:3, 4:5, 5:4, 2:3, 3:4, 21:9
+- **Flexible Aspect Ratios**: 14 options — 1:1, 1:4, 1:8, 2:3, 3:2, 3:4, 4:1, 4:3, 4:5, 5:4, 8:1, 9:16, 16:9, 21:9
 - **Configurable via Environment Variables**: Output directory, default size, timeouts, and more
 
 ---
 
 ## Showcase
-
-### Prompt Enhancement
-
-When `enhance_prompt: true`, simple prompts are transformed into detailed, cinematic descriptions.
-
-**Original:** `"A fierce wolf wearing the black symbiote Spider-Man suit, web-slinging through city at night"`
-
-**Enhanced:** `"A powerfully built Alaskan Tundra Wolf, snarling fiercely, wearing the matte black, viscous, wet-looking symbiote suit with exaggerated white spider emblem. Captured mid-air in dramatic web-slinging arc with taut glowing webbing. Extreme low-angle perspective, hyper-realistic neo-noir cityscape at midnight with rain-slicked asphalt. High-contrast cinematic lighting with deep shadows and electric neon rim lighting."`
-
-**Wolf — Black Symbiote Suit**
-![Wolf in Black Symbiote Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/wolf_symbiote.png)
-
-**Lion — Classic Red & Blue Suit**
-![Lion in Classic Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/lion_classic.png)
-
-**Black Panther — Symbiote Suit**
-![Panther in Symbiote Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/panther_symbiote.png)
-
-**Eagle — Classic Suit in Flight**
-![Eagle in Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/eagle_classic.png)
-
-**Grizzly Bear — Symbiote Suit**
-![Bear in Symbiote Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/bear_symbiote.png)
-
-**Fox — Classic Suit at Dusk**
-![Fox in Spider-Man Suit](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/fox_classic.png)
-
-All generated with `enhance_prompt: true`, 2K, 16:9.
-
----
 
 ### Photorealistic Capabilities
 
@@ -77,6 +47,27 @@ All generated with `enhance_prompt: true`, 2K, 16:9.
 
 **Elon Musk — SpaceX Skateboarding**
 ![Elon skateboarding at SpaceX](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/elon_spacex_skateboard.png)
+
+### Google Search Grounding
+
+**Current Weather in San Francisco**
+![Weather search](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/weather_google_search.png)
+
+### Google Image Search
+
+**Butterfly on Flower**
+![Butterfly image search](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/butterfly_image_search.png)
+
+### Different Resolutions
+
+**512px (fastest)**
+![Cat 512px](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/cat_512px.png)
+
+**1K**
+![Rose 1K](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/rose_1k.png)
+
+**2K**
+![Cyberpunk 2K](https://raw.githubusercontent.com/anand-92/ultimate-image-gen-mcp/main/showcase/examples/cyberpunk_2k.png)
 
 ---
 
@@ -167,21 +158,22 @@ Images are saved to `~/gemini_images` by default. Add `"OUTPUT_DIR": "/your/path
 
 ### `generate_image`
 
-Generate an image with Gemini 3 Pro Image.
+Generate an image with Gemini 3.1 Flash Image.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `prompt` | string | required | Text description. Use full sentences, not keyword lists. |
-| `model` | string | `gemini-3-pro-image-preview` | Model to use (currently only one supported) |
-| `enhance_prompt` | bool | `false` | Auto-enhance prompt using Gemini Flash before generation |
-| `aspect_ratio` | string | `1:1` | One of: `1:1` `2:3` `3:2` `3:4` `4:3` `4:5` `5:4` `9:16` `16:9` `21:9` |
-| `image_size` | string | `2K` | `1K`, `2K`, or `4K` — **must be uppercase K** |
+| `aspect_ratio` | string | `1:1` | One of: `1:1` `1:4` `1:8` `2:3` `3:2` `3:4` `4:1` `4:3` `4:5` `5:4` `8:1` `9:16` `16:9` `21:9` |
+| `image_size` | string | `2K` | `512px`, `1K`, `2K`, or `4K` |
 | `output_format` | string | `png` | `png`, `jpeg`, or `webp` |
-| `reference_image_paths` | list | `[]` | Up to 14 local image paths (max 6 objects + max 5 humans) |
+| `reference_image_paths` | list | `[]` | Up to 14 local image paths (10 objects + 4 characters) |
 | `enable_google_search` | bool | `false` | Ground generation in real-time Google Search data |
+| `enable_image_search` | bool | `false` | Use Google Image Search for visual context |
+| `thinking_level` | string | `minimal` | `minimal` (fast) or `high` (best quality) |
 | `response_modalities` | list | `["TEXT","IMAGE"]` | `["TEXT","IMAGE"]`, `["IMAGE"]`, or `["TEXT"]` |
 
 **Image size guide:**
+- `512px` — fastest, lowest cost (0.5K)
 - `1K` — fast, good for testing (~1-2 MB)
 - `2K` — recommended for most use cases (~3-5 MB)
 - `4K` — maximum quality for production assets (~8-15 MB)
@@ -195,13 +187,13 @@ Generate multiple images in parallel.
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `prompts` | list | required | List of prompt strings (max 8) |
-| `model` | string | `gemini-3-pro-image-preview` | Model for all images |
-| `enhance_prompt` | bool | `true` | Enhance all prompts before generation |
 | `aspect_ratio` | string | `1:1` | Aspect ratio applied to all images |
 | `image_size` | string | `2K` | Resolution for all images |
 | `output_format` | string | `png` | Format for all images |
 | `response_modalities` | list | `["TEXT","IMAGE"]` | Modalities for all images |
 | `batch_size` | int | `8` | Max concurrent requests |
+| `enable_image_search` | bool | `false` | Use Google Image Search for visual context |
+| `thinking_level` | string | `minimal` | `minimal` or `high` |
 
 ---
 
