@@ -108,6 +108,8 @@ def validate_batch_size(size: int, max_size: int) -> None:
 
 def validate_image_size(size: str) -> str:
     """Validate and normalize image size to uppercase (e.g. '2k' -> '2K')."""
+    if size.lower() == "512px":
+        return "512px"
     normalized = size.upper()
     if normalized not in IMAGE_SIZES:
         available = ", ".join(IMAGE_SIZES)

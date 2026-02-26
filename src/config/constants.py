@@ -4,23 +4,28 @@ from pathlib import Path
 
 # Supported models: gemini-3-pro-image-preview for generation, gemini-flash-latest for enhancement
 GEMINI_MODELS = {
+    "gemini-3.1-flash-image-preview": "gemini-3.1-flash-image-preview",
     "gemini-3-pro-image-preview": "gemini-3-pro-image-preview",
     "gemini-flash-latest": "gemini-flash-latest",
 }
 
 ALL_MODELS = GEMINI_MODELS
 
-DEFAULT_MODEL = "gemini-3-pro-image-preview"
+DEFAULT_MODEL = "gemini-3.1-flash-image-preview"
 DEFAULT_ENHANCEMENT_MODEL = "gemini-flash-latest"
 
 ASPECT_RATIOS = [
     "1:1",
+    "1:4",
+    "1:8",
     "2:3",
     "3:2",
     "3:4",
+    "4:1",
     "4:3",
     "4:5",
     "5:4",
+    "8:1",
     "9:16",
     "16:9",
     "21:9",
@@ -34,7 +39,8 @@ IMAGE_FORMATS = {
 }
 
 # API requires uppercase 'K' — validate_image_size normalizes inputs automatically
-IMAGE_SIZES = ["1K", "2K", "4K"]
+# 512px is supported by Flash 3.1
+IMAGE_SIZES = ["512px", "1K", "2K", "4K"]
 DEFAULT_IMAGE_SIZE = "2K"
 
 MAX_REFERENCE_IMAGES = 14

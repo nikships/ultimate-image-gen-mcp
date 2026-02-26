@@ -67,25 +67,36 @@ class ImageService:
         )
 
     async def generate(
-        self, prompt: str, *, model: str | None = None, enhance_prompt: bool = True, **kwargs: Any
+        self,
+        prompt: str,
+        *,
+        model: str | None = None,
+        enhance_prompt: bool = True,
+        thinking_level: str | None = None,
+        include_thoughts: bool = True,
+        enable_image_search: bool = False,
+        **kwargs: Any,
     ) -> list[ImageResult]:
         """
-        Generate images using Gemini 3 Pro Image.
+        Generate images using Gemini 3 Pro Image or Gemini 3.1 Flash Image.
 
         Args:
             prompt: Text prompt for image generation
-            model: Model to use (default: gemini-3-pro-image-preview)
+            model: Model to use (default: gemini-3.1-flash-image-preview)
             enhance_prompt: Whether to enhance the prompt before generation
+            thinking_level: "minimal" or "high" (only for Gemini 3.1 Flash)
+            include_thoughts: Whether to return thinking process (default: True)
+            enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
             **kwargs: Additional parameters (aspect_ratio, reference_images, etc.)
 
         Returns:
             List of ImageResult objects
         """
         if model is None:
-            model = "gemini-3-pro-image-preview"
+            model = "gemini-3.1-flash-image-preview"
 
         if model not in GEMINI_MODELS:
-            raise ValueError(f"Unknown model: {model}. Only Gemini 3 Pro Image is supported.")
+            raise ValueError(f"Unknown model: {model}. Supported: {', '.join(GEMINI_MODELS.keys())}")
 
         original_prompt = prompt
 
@@ -99,7 +110,14 @@ class ImageService:
             except Exception as e:
                 logger.warning(f"Prompt enhancement failed, using original: {e}")
 
-        response = await self.gemini_client.generate_image(prompt=prompt, model=model, **kwargs)
+        response = await self.gemini_client.generate_image(
+            prompt=prompt,
+            model=model,
+            thinking_level=thinking_level,
+            include_thoughts=include_thoughts,
+            enable_image_search=enable_image_search,
+            **kwargs,
+        )
 
         return [
             ImageResult(
@@ -107,7 +125,13 @@ class ImageService:
                 prompt=original_prompt,
                 model=model,
                 index=i,
-                metadata={"enhanced_prompt": prompt, **kwargs},
+                metadata={
+                    "enhanced_prompt": prompt,
+                    "thinking_level": thinking_level,
+                    "include_thoughts": include_thoughts,
+                    "enable_image_search": enable_image_search,
+                    **kwargs,
+                },
             )
             for i, image_data in enumerate(response["images"])
         ]
