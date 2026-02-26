@@ -90,18 +90,11 @@ class GeminiClient:
                 "image_config": image_config,
             }
 
-            # Thinking Config - minimal or high
-            thinking_level_map = {
-                "minimal": types.ThinkingLevel.MINIMAL,
-                "high": types.ThinkingLevel.HIGH,
-            }
-            config_args["thinking_config"] = types.ThinkingConfig(
-                thinking_level=thinking_level_map.get(
-                    thinking_level.lower(), types.ThinkingLevel.MINIMAL
-                ),
-            )
-
             # Search Tools
+            # NOTE: When using search tools with thinking mode, there's a known issue
+            # where the model needs thought_signature in function calls. To work around
+            # this, we force minimal thinking when search is enabled.
+            effective_thinking_level = thinking_level
             if enable_google_search or enable_image_search:
                 config_args["tools"] = [
                     types.Tool(
@@ -113,6 +106,21 @@ class GeminiClient:
                         )
                     )
                 ]
+                # Force minimal thinking when search is enabled to avoid thought_signature errors
+                if thinking_level.lower() != "minimal":
+                    effective_thinking_level = "minimal"
+                    logger.info("Forcing minimal thinking due to search tool usage")
+
+            # Thinking Config - minimal or high
+            thinking_level_map = {
+                "minimal": types.ThinkingLevel.MINIMAL,
+                "high": types.ThinkingLevel.HIGH,
+            }
+            config_args["thinking_config"] = types.ThinkingConfig(
+                thinking_level=thinking_level_map.get(
+                    effective_thinking_level.lower(), types.ThinkingLevel.MINIMAL
+                ),
+            )
 
             config = types.GenerateContentConfig(**config_args)
 

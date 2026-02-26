@@ -171,11 +171,38 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ✓ SynthID Watermarking: Invisible watermark on all images
 
 
+        🚀 WHY THIS MODEL IS DIFFERENT:
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        This isn't your old image generator. Gemini 3.1 Flash has LIVE ACCESS to
+        Google Search and Image Search - it can find actual references for ANYTHING.
+
+        Examples:
+        • "Way of Wade 12 latest colorway" → model finds the real shoe online
+        • "Tony Hawk doing a kickflip" → model finds actual Tony Hawk photos
+        • "iPhone 16 Pro Max" → generates the REAL device, not a guess
+        • "Taylor Swift at the 2024 VMAs" → finds real reference images
+
+        Don't over-prompt! Simple descriptions work best. The model COOKS.
+
+
         📋 PARAMETERS:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
         ► prompt (required, str):
           The text description. Be descriptive and specific.
+          TIP: Less is more. "Tony Hawk kickflip" > "A man with long blonde hair
+          wearing a skateboarding helmet doing a trick on a skateboard"
+
+        ► enable_google_search (optional, bool, default: False):
+          Enable Google Web Search for real-time data grounding.
+          USE THIS FOR: Products, people, events, places, anything that exists NOW.
+          The model will search for current info and generate ACCURATELY.
+
+        ► enable_image_search (optional, bool, default: False):
+          Enable Google Image Search for visual context.
+          USE THIS FOR: Any visual reference - the model finds real images to work from.
+          This is the "secret sauce" - it can reference actual photos of people,
+          products, art, anything on the web.
 
         ► aspect_ratio (optional, str, default: "1:1"):
           OPTIONS: "1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4",
@@ -191,15 +218,9 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ► reference_image_paths (optional, list[str]):
           Paths to up to 14 reference images (10 objects + 4 characters).
 
-        ► enable_google_search (optional, bool, default: False):
-          Enable Google Web Search for real-time data grounding (weather, stocks, news).
-
-        ► enable_image_search (optional, bool, default: False):
-          Enable Google Image Search for visual context.
-          Example: "Visualize a butterfly resting on a flower" (model finds real images).
-
         ► thinking_level (optional, str, default: "minimal"):
           Controls reasoning effort: "minimal" (fast) or "high" (best quality, slower).
+          PRO TIP: Use "high" when using Google/Image search for best results.
 
 
         🧠 THINKING MODE:
@@ -208,6 +229,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         Use thinking_level to balance quality vs latency:
         • minimal: Fastest, basic prompts
         • high: Best quality for complex prompts, slower
+        PRO TIP: Use "high" thinking when using Google/Image search for best results.
 
 
 

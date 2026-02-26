@@ -15,8 +15,10 @@
 - **Advanced Text Rendering**: Legible, stylized text in infographics, menus, diagrams, and logos
 - **Up to 14 Reference Images**: Up to 10 objects + 4 characters for style/character consistency
 - **Google Search Grounding**: Real-time data (weather, stocks, events, maps)
-- **Google Image Search**: Visual context from web images
+- **Google Image Search**: Visual context from web images — the model can FIND real images of anything
 - **Thinking Mode**: Configurable reasoning - "minimal" (fast) or "high" (best quality)
+
+> **This model is different.** Unlike traditional image generators that rely solely on training data, Gemini 3.1 Flash has live access to Google Search and Image Search. It can find actual references for products, people, events, or anything that exists online. "Way of Wade 12" → generates the REAL shoe. "Tony Hawk" → finds real photos. Don't over-prompt — let the model cook.
 
 ### Server Features
 - **Batch Processing**: Generate multiple images in parallel (up to 8 concurrent)
@@ -162,13 +164,13 @@ Generate an image with Gemini 3.1 Flash Image.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `prompt` | string | required | Text description. Use full sentences, not keyword lists. |
+| `prompt` | string | required | Text description. Less is more — "Tony Hawk kickflip" beats a long description. The model with search can find references automatically. |
 | `aspect_ratio` | string | `1:1` | One of: `1:1` `1:4` `1:8` `2:3` `3:2` `3:4` `4:1` `4:3` `4:5` `5:4` `8:1` `9:16` `16:9` `21:9` |
 | `image_size` | string | `2K` | `512px`, `1K`, `2K`, or `4K` |
 | `output_format` | string | `png` | `png`, `jpeg`, or `webp` |
 | `reference_image_paths` | list | `[]` | Up to 14 local image paths (10 objects + 4 characters) |
-| `enable_google_search` | bool | `false` | Ground generation in real-time Google Search data |
-| `enable_image_search` | bool | `false` | Use Google Image Search for visual context |
+| `enable_google_search` | bool | `false` | **USE THIS** for products, people, events — anything that exists now. The model searches Google for real info. |
+| `enable_image_search` | bool | `false` | **USE THIS** for visual references. The model finds actual images to work from. This is huge — it can reference real photos of anyone/anything. |
 | `thinking_level` | string | `minimal` | `minimal` (fast) or `high` (best quality) |
 | `response_modalities` | list | `["TEXT","IMAGE"]` | `["TEXT","IMAGE"]`, `["IMAGE"]`, or `["TEXT"]` |
 
