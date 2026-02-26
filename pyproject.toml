@@ -1,6 +1,6 @@
 [project]
 name = "ultimate-gemini-mcp"
-version = "5.0.5"
+version = "5.0.6"
 description = "Gemini 3.1 Flash Image MCP server - fast image generation with advanced reasoning, 512px-4K resolution, up to 14 reference images, Google Search grounding, and configurable thinking mode"
 readme = "README.md"
 requires-python = ">=3.11"
