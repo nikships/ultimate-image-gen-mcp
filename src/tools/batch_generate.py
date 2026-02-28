@@ -17,10 +17,14 @@ logger = logging.getLogger(__name__)
 async def batch_generate_images(
     prompts: list[str],
     aspect_ratio: str = "1:1",
+    image_size: str = "2K",
     output_format: str = "png",
+    reference_image_paths: list[str] | None = None,
     batch_size: int | None = None,
+    enable_google_search: bool = False,
     enable_image_search: bool = False,
-    **shared_params: Any,
+    response_modalities: list[str] | None = None,
+    thinking_level: str = "minimal",
 ) -> dict[str, Any]:
     """
     Generate multiple images from a list of prompts.
@@ -28,10 +32,14 @@ async def batch_generate_images(
     Args:
         prompts: List of text prompts
         aspect_ratio: Aspect ratio for all images
+        image_size: Image resolution for all images
         output_format: Output format for all images
+        reference_image_paths: Shared reference image paths (up to 14)
         batch_size: Number of images to process in parallel (default: from config)
+        enable_google_search: Enable Google Web Search grounding
         enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
-        **shared_params: Additional parameters shared across all generations
+        response_modalities: Response types (TEXT, IMAGE)
+        thinking_level: Thinking level (minimal or high)
 
     Returns:
         Dict with batch results
@@ -61,9 +69,13 @@ async def batch_generate_images(
             generate_image_tool(
                 prompt=prompt,
                 aspect_ratio=aspect_ratio,
+                image_size=image_size,
                 output_format=output_format,
+                reference_image_paths=reference_image_paths,
+                enable_google_search=enable_google_search,
                 enable_image_search=enable_image_search,
-                **shared_params,
+                response_modalities=response_modalities,
+                thinking_level=thinking_level,
             )
             for prompt in batch
         ]
@@ -112,9 +124,14 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
     async def batch_generate(
         prompts: list[str],
         aspect_ratio: str = "1:1",
+        image_size: str = "2K",
         output_format: str = "png",
+        reference_image_paths: list[str] | None = None,
         batch_size: int | None = None,
+        enable_google_search: bool = False,
         enable_image_search: bool = False,
+        response_modalities: list[str] | None = None,
+        thinking_level: str = "minimal",
     ) -> str:
         """
         Generate multiple images from a list of prompts efficiently.
@@ -125,9 +142,14 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
         Args:
             prompts: List of text descriptions for image generation
             aspect_ratio: Aspect ratio for all images (default: 1:1)
+            image_size: Image resolution for all images (default: 2K)
             output_format: Image format for all images (default: png)
+            reference_image_paths: Shared reference image paths (up to 14)
             batch_size: Parallel batch size (default: from config)
+            enable_google_search: Enable Google Web Search grounding
             enable_image_search: Enable Google Image Search
+            response_modalities: Response types (TEXT, IMAGE)
+            thinking_level: Thinking level - "minimal" or "high"
 
         Returns:
             JSON string with batch results including individual image paths
@@ -155,9 +177,14 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
             result = await batch_generate_images(
                 prompts=prompts,
                 aspect_ratio=aspect_ratio,
+                image_size=image_size,
                 output_format=output_format,
+                reference_image_paths=reference_image_paths,
                 batch_size=batch_size,
+                enable_google_search=enable_google_search,
                 enable_image_search=enable_image_search,
+                response_modalities=response_modalities,
+                thinking_level=thinking_level,
             )
 
             return json.dumps(result, indent=2)
