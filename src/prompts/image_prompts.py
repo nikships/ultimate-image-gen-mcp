@@ -598,7 +598,7 @@ Generate an image using the following crafted prompt:
 PROMPT:
 "Character Concept Art Sheet of {character}. Features: {features_str}. \
 Outfit: {clothing}. Layout: A-Pose front, 3/4 profile, and action pose. \
-Background: Neutral grey #808080. Rendering Style: Clean line art with \
+Background: Neutral medium gray. Rendering Style: Clean line art with \
 flat cel-shading, concept art industry standard."
 
 Call `generate_image` with these parameters:

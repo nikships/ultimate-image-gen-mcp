@@ -18,6 +18,8 @@ from ..core import (
     validate_image_format,
     validate_image_size,
     validate_prompt,
+    validate_reference_image,
+    validate_reference_images_count,
 )
 from ..services import ImageService
 
@@ -60,6 +62,10 @@ async def generate_image_tool(
     image_size = validate_image_size(image_size)
     validate_image_format(output_format)
 
+    # Validate reference images count if provided
+    if reference_image_paths:
+        validate_reference_images_count(reference_image_paths)
+
     settings = get_settings()
     model = settings.api.default_model
 
@@ -73,16 +79,17 @@ async def generate_image_tool(
         params: dict[str, Any] = {
             "aspect_ratio": aspect_ratio,
             "image_size": image_size,
+            "output_format": output_format,
         }
 
         if reference_image_paths:
             reference_images = []
             for img_path in reference_image_paths[:14]:
-                image_path = Path(img_path)
-                if image_path.exists():
-                    reference_images.append(base64.b64encode(image_path.read_bytes()).decode())
-                else:
-                    logger.warning(f"Reference image not found: {img_path}")
+                try:
+                    _, image_bytes = validate_reference_image(img_path)
+                    reference_images.append(base64.b64encode(image_bytes).decode())
+                except Exception as e:
+                    logger.warning(f"Reference image validation failed for {img_path}: {e}")
             if reference_images:
                 params["reference_images"] = reference_images
 
@@ -111,6 +118,8 @@ async def generate_image_tool(
             "images": [],
             "metadata": {
                 "aspect_ratio": aspect_ratio,
+                "image_size": image_size,
+                "output_format": output_format,
                 "thinking_level": thinking_level,
             },
         }
@@ -171,7 +180,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ✓ SynthID Watermarking: Invisible watermark on all images
 
 
-        🚀 WHY THIS MODEL IS DIFFERENT:
+        🚀 WHY GEMINI 3.1 FLASH IS DIFFERENT:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         This isn't your old image generator. Gemini 3.1 Flash has LIVE ACCESS to
         Google Search and Image Search - it can find actual references for ANYTHING.

@@ -1,15 +1,20 @@
 """Input validation utilities."""
 
 import base64
+import io
 import re
 from pathlib import Path
+
+from PIL import Image
 
 from ..config.constants import (
     ALL_MODELS,
     ASPECT_RATIOS,
     IMAGE_FORMATS,
     IMAGE_SIZES,
+    MAX_IMAGE_SIZE_BYTES,
     MAX_PROMPT_LENGTH,
+    MAX_REFERENCE_IMAGES,
 )
 from .exceptions import ValidationError
 
@@ -58,6 +63,56 @@ def validate_file_path(path: str) -> Path:
         raise ValidationError(f"Path is not a file: {file_path}")
 
     return file_path
+
+
+def validate_reference_image(path: str | Path) -> tuple[Path, bytes]:
+    """
+    Validate a reference image file comprehensively.
+
+    Checks:
+    - File exists and is readable
+    - File size is within MAX_IMAGE_SIZE_BYTES limit
+    - File is a valid image format (using PIL)
+
+    Returns:
+        Tuple of (resolved_path, file_bytes)
+
+    Raises:
+        ValidationError: If any validation check fails
+    """
+    file_path = validate_file_path(str(path))
+
+    # Check file size
+    file_size = file_path.stat().st_size
+    if file_size > MAX_IMAGE_SIZE_BYTES:
+        raise ValidationError(
+            f"Reference image too large: {file_size / (1024 * 1024):.1f}MB "
+            f"(max {MAX_IMAGE_SIZE_BYTES / (1024 * 1024):.0f}MB): {file_path}"
+        )
+
+    if file_size == 0:
+        raise ValidationError(f"Reference image is empty: {file_path}")
+
+    # Read and validate it's a proper image
+    try:
+        image_bytes = file_path.read_bytes()
+        with Image.open(io.BytesIO(image_bytes)) as img:
+            # Verify it's a valid image by loading metadata
+            img.verify()
+    except ValidationError:
+        raise
+    except Exception as e:
+        raise ValidationError(f"Invalid image file {file_path}: {e}") from e
+
+    return file_path, image_bytes
+
+
+def validate_reference_images_count(image_paths: list[str]) -> None:
+    """Validate the number of reference images doesn't exceed the maximum."""
+    if len(image_paths) > MAX_REFERENCE_IMAGES:
+        raise ValidationError(
+            f"Too many reference images: {len(image_paths)} (max {MAX_REFERENCE_IMAGES})"
+        )
 
 
 def validate_base64_image(data: str) -> None:

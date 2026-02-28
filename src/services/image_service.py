@@ -24,32 +24,50 @@ class ImageResult:
         model: str,
         index: int = 0,
         metadata: dict[str, Any] | None = None,
+        output_format: str = "png",
     ) -> None:
-        self.image_data = image_data  # Base64-encoded PNG
+        self.image_data = image_data  # Base64-encoded image
         self.prompt = prompt
         self.model = model
         self.index = index
         self.metadata = metadata or {}
         self.timestamp = datetime.now()
+        self.output_format = output_format.lower()
 
     def save(self, output_dir: Path, filename: str | None = None) -> Path:
         """Decode and save the image to disk, returning the output path."""
         output_path = output_dir / (filename or self._generate_filename())
         try:
-            output_path.write_bytes(base64.b64decode(self.image_data))
+            # Convert to requested format if not PNG
+            if self.output_format != "png":
+                import io
+                from PIL import Image
+
+                image_bytes = base64.b64decode(self.image_data)
+                img = Image.open(io.BytesIO(image_bytes))
+                buffer = io.BytesIO()
+                save_format = "JPEG" if self.output_format in ("jpg", "jpeg") else self.output_format.upper()
+                img.save(buffer, format=save_format)
+                output_path.write_bytes(buffer.getvalue())
+            else:
+                output_path.write_bytes(base64.b64decode(self.image_data))
             logger.info(f"Saved image to {output_path}")
             return output_path
         except Exception as e:
             raise ImageProcessingError(f"Failed to save image: {e}") from e
 
     def _generate_filename(self) -> str:
-        """Generate a readable filename from the prompt and a short timestamp."""
+        """Generate a unique filename from the prompt and a high-res timestamp."""
         import re
+        from uuid import uuid4
 
         slug = re.sub(r"[^a-z0-9]+", "-", self.prompt[:60].lower()).strip("-")
+        # Use microsecond precision + UUID prefix to prevent collisions
         time_suffix = self.timestamp.strftime("%H%M%S")
+        micros = self.timestamp.microsecond
+        uuid_prefix = str(uuid4())[:8]
         index_str = f"-{self.index + 1}" if self.index > 0 else ""
-        return f"{slug}{index_str}-{time_suffix}.png"
+        return f"{slug}{index_str}-{time_suffix}-{micros:06d}-{uuid_prefix}.{self.output_format}"
 
     def get_size(self) -> int:
         """Return the image size in bytes."""
@@ -115,6 +133,7 @@ class ImageService:
             **kwargs,
         )
 
+        output_format = kwargs.get("output_format", "png")
         return [
             ImageResult(
                 image_data=image_data,
@@ -126,6 +145,7 @@ class ImageService:
                     "enable_image_search": enable_image_search,
                     **kwargs,
                 },
+                output_format=output_format,
             )
             for i, image_data in enumerate(response["images"])
         ]

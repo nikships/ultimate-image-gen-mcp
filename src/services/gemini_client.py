@@ -4,7 +4,6 @@ import asyncio
 import base64
 import io
 import logging
-from functools import partial
 from typing import Any
 
 from google import genai
@@ -129,15 +128,11 @@ class GeminiClient:
                 f"aspect_ratio={aspect_ratio}, items={len(contents)}"
             )
 
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                partial(
-                    self.client.models.generate_content,
-                    model=model_id,
-                    contents=contents,
-                    config=config,
-                ),
+            response = await asyncio.to_thread(
+                self.client.models.generate_content,
+                model=model_id,
+                contents=contents,
+                config=config,
             )
 
             extraction = self._extract_content_from_response(response)
@@ -207,15 +202,11 @@ class GeminiClient:
                 else None
             )
 
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                partial(
-                    self.client.models.generate_content,
-                    model=model_id,
-                    contents=prompt,
-                    config=config,
-                ),
+            response = await asyncio.to_thread(
+                self.client.models.generate_content,
+                model=model_id,
+                contents=prompt,
+                config=config,
             )
 
             return response.text or ""

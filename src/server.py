@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Gemini 3 Pro Image MCP Server - Main Entry Point
+Gemini 3.1 Flash Image MCP Server - Main Entry Point
 
-Supports Gemini 3 Pro Image with 4K resolution, thinking mode, reference images,
+Supports Gemini 3.1 Flash Image with 4K resolution, thinking mode, reference images,
 Google Search grounding, prompt enhancement, and batch processing.
 """
 
@@ -41,7 +41,7 @@ def create_app() -> FastMCP:
 
         mcp = FastMCP(
             "Ultimate Gemini MCP",
-            version="1.5.0",
+            version="6.0.2",
         )
 
         register_generate_image_tool(mcp)
@@ -62,7 +62,14 @@ def main() -> None:
         logger.info("Starting Ultimate Gemini MCP Server...")
         app = create_app()
         logger.info("Server is ready and listening for MCP requests")
-        app.run()
+
+        settings = get_settings()
+        # Apply server configuration from settings
+        app.run(
+            transport=settings.server.transport,
+            host=settings.server.host,
+            port=settings.server.port,
+        )
 
     except KeyboardInterrupt:
         logger.info("Server shutdown requested by user")

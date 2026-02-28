@@ -8,7 +8,11 @@ import logging
 from typing import Any
 
 from ..config import MAX_BATCH_SIZE, get_settings
-from ..core import validate_batch_size, validate_prompts_list
+from ..core import (
+    validate_batch_size,
+    validate_prompts_list,
+    validate_reference_images_count,
+)
 from .generate_image import generate_image_tool
 
 logger = logging.getLogger(__name__)
@@ -46,6 +50,10 @@ async def batch_generate_images(
     """
     validate_prompts_list(prompts)
 
+    # Validate reference images count if provided
+    if reference_image_paths:
+        validate_reference_images_count(reference_image_paths)
+
     settings = get_settings()
     if batch_size is None:
         batch_size = settings.api.max_batch_size
@@ -56,6 +64,8 @@ async def batch_generate_images(
         "success": True,
         "total_prompts": len(prompts),
         "batch_size": batch_size,
+        "image_size": image_size,
+        "output_format": output_format,
         "completed": 0,
         "failed": 0,
         "results": [],

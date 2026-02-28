@@ -1,12 +1,12 @@
 """
 Ultimate Gemini MCP Server
 
-A production-ready MCP server for Google's Gemini 3 Pro Image, featuring
-high-resolution output (1K-4K), reference images, Google Search grounding,
+A production-ready MCP server for Google's Gemini 3.1 Flash Image, featuring
+high-resolution output (512px-4K), reference images, Google Search grounding,
 thinking mode, prompt enhancement, and batch processing.
 """
 
-__version__ = "3.0.19"
+__version__ = "6.0.2"
 __author__ = "Ultimate Gemini MCP"
 
 from .config import get_settings

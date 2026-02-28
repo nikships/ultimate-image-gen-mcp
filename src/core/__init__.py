@@ -22,6 +22,8 @@ from .validation import (
     validate_model,
     validate_prompt,
     validate_prompts_list,
+    validate_reference_image,
+    validate_reference_images_count,
 )
 
 __all__ = [
@@ -45,5 +47,7 @@ __all__ = [
     "validate_base64_image",
     "validate_prompts_list",
     "validate_batch_size",
+    "validate_reference_image",
+    "validate_reference_images_count",
     "sanitize_filename",
 ]
