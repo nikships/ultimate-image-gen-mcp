@@ -83,8 +83,10 @@
 
 **Using uvx (recommended — no install needed):**
 ```bash
-uvx ultimate-gemini-mcp
+uvx ultimate-gemini-mcp@latest
 ```
+
+> **Note:** Use `@latest` to ensure uv always fetches the newest version from PyPI. Without it, uv may use a cached environment.
 
 **Using pip:**
 ```bash
@@ -111,7 +113,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "ultimate-gemini": {
       "command": "uvx",
-      "args": ["ultimate-gemini-mcp"],
+      "args": ["ultimate-gemini-mcp@latest"],
       "env": {
         "GEMINI_API_KEY": "your-api-key-here"
       }
@@ -131,7 +133,7 @@ Config file locations:
 ```bash
 claude mcp add ultimate-gemini \
   --env GEMINI_API_KEY=your-api-key \
-  -- uvx ultimate-gemini-mcp
+  -- uvx ultimate-gemini-mcp@latest
 ```
 
 ### Cursor
@@ -143,7 +145,7 @@ Add to `.cursor/mcp.json`:
   "mcpServers": {
     "ultimate-gemini": {
       "command": "uvx",
-      "args": ["ultimate-gemini-mcp"],
+      "args": ["ultimate-gemini-mcp@latest"],
       "env": {
         "GEMINI_API_KEY": "your-api-key-here"
       }
