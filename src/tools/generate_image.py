@@ -9,7 +9,6 @@ reference image support, Google Search grounding (Web & Image), and thinking mod
 import base64
 import json
 import logging
-from pathlib import Path
 from typing import Any
 
 from ..config import get_settings
