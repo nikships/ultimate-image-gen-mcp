@@ -3,6 +3,7 @@ Batch image generation tool for processing multiple prompts efficiently.
 """
 
 import asyncio
+import base64
 import json
 import logging
 from typing import Any
@@ -11,6 +12,7 @@ from ..config import MAX_BATCH_SIZE, get_settings
 from ..core import (
     validate_batch_size,
     validate_prompts_list,
+    validate_reference_image,
     validate_reference_images_count,
 )
 from .generate_image import generate_image_tool
@@ -51,8 +53,18 @@ async def batch_generate_images(
     validate_prompts_list(prompts)
 
     # Validate reference images count if provided
+    reference_images_data = None
     if reference_image_paths:
         validate_reference_images_count(reference_image_paths)
+        reference_images_data = []
+        for img_path in reference_image_paths[:14]:
+            try:
+                _, image_bytes = validate_reference_image(img_path)
+                reference_images_data.append(base64.b64encode(image_bytes).decode())
+            except Exception as e:
+                logger.warning(f"Reference image validation failed for {img_path}: {e}")
+        if not reference_images_data:
+            reference_images_data = None
 
     settings = get_settings()
     if batch_size is None:
@@ -82,6 +94,7 @@ async def batch_generate_images(
                 image_size=image_size,
                 output_format=output_format,
                 reference_image_paths=reference_image_paths,
+                reference_images_data=reference_images_data,
                 enable_google_search=enable_google_search,
                 enable_image_search=enable_image_search,
                 response_modalities=response_modalities,

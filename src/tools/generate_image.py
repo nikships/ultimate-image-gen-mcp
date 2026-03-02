@@ -31,6 +31,7 @@ async def generate_image_tool(
     image_size: str = "2K",
     output_format: str = "png",
     reference_image_paths: list[str] | None = None,
+    reference_images_data: list[str] | None = None,
     enable_google_search: bool = False,
     enable_image_search: bool = False,
     response_modalities: list[str] | None = None,
@@ -47,6 +48,7 @@ async def generate_image_tool(
         image_size: Image resolution: 512px, 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
         reference_image_paths: Paths to reference images (up to 14)
+        reference_images_data: Base64 encoded reference images (bypasses disk read if provided)
         enable_google_search: Use Google Web Search for real-time data grounding
         enable_image_search: Use Google Image Search for visual context
         response_modalities: Response types (TEXT, IMAGE - default: both)
@@ -81,7 +83,9 @@ async def generate_image_tool(
             "output_format": output_format,
         }
 
-        if reference_image_paths:
+        if reference_images_data:
+            params["reference_images"] = reference_images_data[:14]
+        elif reference_image_paths:
             reference_images = []
             for img_path in reference_image_paths[:14]:
                 try:
