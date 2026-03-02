@@ -1,0 +1,112 @@
+import pytest
+from src.core.validation import (
+    validate_aspect_ratio,
+    validate_prompt,
+    validate_model,
+    validate_image_format,
+    validate_batch_size,
+    validate_image_size,
+)
+from src.core.exceptions import ValidationError
+from src.config.constants import (
+    ASPECT_RATIOS,
+    ALL_MODELS,
+    IMAGE_FORMATS,
+    IMAGE_SIZES,
+    MAX_PROMPT_LENGTH,
+)
+
+@pytest.mark.unit
+class TestValidation:
+    """Tests for validation functions in src/core/validation.py."""
+
+    @pytest.mark.parametrize("aspect_ratio", ASPECT_RATIOS)
+    def test_validate_aspect_ratio_valid(self, aspect_ratio):
+        """Test that valid aspect ratios do not raise ValidationError."""
+        validate_aspect_ratio(aspect_ratio)
+
+    @pytest.mark.parametrize("invalid_ratio", ["1:2", "2:1", "invalid", "", "1.1", "1:1:1"])
+    def test_validate_aspect_ratio_invalid(self, invalid_ratio):
+        """Test that invalid aspect ratios raise ValidationError."""
+        with pytest.raises(ValidationError) as excinfo:
+            validate_aspect_ratio(invalid_ratio)
+        assert f"Invalid aspect ratio '{invalid_ratio}'" in str(excinfo.value)
+        assert "Available:" in str(excinfo.value)
+
+    @pytest.mark.parametrize("prompt", ["Valid prompt", "A" * MAX_PROMPT_LENGTH])
+    def test_validate_prompt_valid(self, prompt):
+        """Test that valid prompts do not raise ValidationError."""
+        validate_prompt(prompt)
+
+    @pytest.mark.parametrize("invalid_prompt,expected_err", [
+        ("", "Prompt cannot be empty"),
+        ("   ", "Prompt cannot be empty"),
+        ("A" * (MAX_PROMPT_LENGTH + 1), "Prompt too long"),
+    ])
+    def test_validate_prompt_invalid(self, invalid_prompt, expected_err):
+        """Test that invalid prompts raise ValidationError."""
+        with pytest.raises(ValidationError) as excinfo:
+            validate_prompt(invalid_prompt)
+        assert expected_err in str(excinfo.value)
+
+    @pytest.mark.parametrize("model", ALL_MODELS.keys())
+    def test_validate_model_valid(self, model):
+        """Test that valid models do not raise ValidationError."""
+        validate_model(model)
+
+    def test_validate_model_invalid(self):
+        """Test that invalid model raises ValidationError."""
+        invalid_model = "non-existent-model"
+        with pytest.raises(ValidationError) as excinfo:
+            validate_model(invalid_model)
+        assert f"Invalid model '{invalid_model}'" in str(excinfo.value)
+        assert "Available models:" in str(excinfo.value)
+
+    @pytest.mark.parametrize("fmt", list(IMAGE_FORMATS.keys()) + [f.upper() for f in IMAGE_FORMATS.keys()])
+    def test_validate_image_format_valid(self, fmt):
+        """Test that valid image formats do not raise ValidationError."""
+        validate_image_format(fmt)
+
+    def test_validate_image_format_invalid(self):
+        """Test that invalid image format raises ValidationError."""
+        invalid_fmt = "gif"
+        with pytest.raises(ValidationError) as excinfo:
+            validate_image_format(invalid_fmt)
+        assert f"Invalid image format '{invalid_fmt}'" in str(excinfo.value)
+        assert "Available:" in str(excinfo.value)
+
+    @pytest.mark.parametrize("size,max_size", [(1, 8), (4, 8), (8, 8)])
+    def test_validate_batch_size_valid(self, size, max_size):
+        """Test that valid batch sizes do not raise ValidationError."""
+        validate_batch_size(size, max_size)
+
+    @pytest.mark.parametrize("size,max_size,expected_err", [
+        (0, 8, "Batch size must be at least 1"),
+        (-1, 8, "Batch size must be at least 1"),
+        (9, 8, "Batch size exceeds maximum"),
+        ("1", 8, "Batch size must be at least 1"), # Pydantic might handle conversion, but our function checks isinstance(size, int)
+    ])
+    def test_validate_batch_size_invalid(self, size, max_size, expected_err):
+        """Test that invalid batch sizes raise ValidationError."""
+        with pytest.raises(ValidationError) as excinfo:
+            validate_batch_size(size, max_size)
+        assert expected_err in str(excinfo.value)
+
+    @pytest.mark.parametrize("size,expected", [
+        ("1k", "1K"),
+        ("2K", "2K"),
+        ("4k", "4K"),
+        ("512px", "512px"),
+        ("512PX", "512px"),
+    ])
+    def test_validate_image_size_valid(self, size, expected):
+        """Test that valid image sizes are normalized and do not raise ValidationError."""
+        assert validate_image_size(size) == expected
+
+    def test_validate_image_size_invalid(self):
+        """Test that invalid image size raises ValidationError."""
+        invalid_size = "8K"
+        with pytest.raises(ValidationError) as excinfo:
+            validate_image_size(invalid_size)
+        assert f"Invalid image size '{invalid_size}'" in str(excinfo.value)
+        assert "Must be one of:" in str(excinfo.value)
