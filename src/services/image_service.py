@@ -74,7 +74,14 @@ class ImageResult:
 
     def get_size(self) -> int:
         """Return the image size in bytes."""
-        return len(base64.b64decode(self.image_data))
+        # Calculate exact size without decoding: (len * 3) / 4 - padding
+        # We strip trailing whitespace as base64.b64decode does
+        s = self.image_data.rstrip()
+        n = len(s)
+        if n == 0:
+            return 0
+        padding = s.count("=", n - 2)
+        return (n * 3) // 4 - padding
 
 
 class ImageService:
