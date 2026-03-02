@@ -235,10 +235,7 @@ class GeminiClient:
 
                 if hasattr(part, "inline_data") and part.inline_data:
                     try:
-                        pil_image = Image.open(io.BytesIO(part.inline_data.data))
-                        buffer = io.BytesIO()
-                        pil_image.save(buffer, format="PNG")
-                        image_b64 = base64.b64encode(buffer.getvalue()).decode()
+                        image_b64 = base64.b64encode(part.inline_data.data).decode()
 
                         if is_thought:
                             thoughts.append(
