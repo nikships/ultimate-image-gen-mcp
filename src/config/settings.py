@@ -29,11 +29,7 @@ class ServerConfig(BaseSettings):
 
     model_config = _ENV_CONFIG
 
-    transport: str = Field(default="stdio", description="Transport mode: stdio or http")
-    host: str = Field(default="localhost", description="Host for HTTP transport")
-    port: int = Field(default=8000, description="Port for HTTP transport")
     log_level: str = Field(default="INFO", description="Logging level")
-    log_format: str = Field(default="standard", description="Log format: standard, json, detailed")
     output_dir: str = Field(
         default=DEFAULT_OUTPUT_DIR, description="Directory for generated images"
     )

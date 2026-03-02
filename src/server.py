@@ -63,19 +63,7 @@ def main() -> None:
         app = create_app()
         logger.info("Server is ready and listening for MCP requests")
 
-        settings = get_settings()
-        # Apply server configuration from settings
-        # Only pass host/port for HTTP transport (stdio doesn't accept them)
-        transport = settings.server.transport
-        if transport == "stdio":
-            app.run(transport="stdio")
-        elif transport == "sse":
-            app.run(transport="sse", host=settings.server.host, port=settings.server.port)
-        elif transport == "http" or transport == "streamable-http":
-            app.run(transport="http", host=settings.server.host, port=settings.server.port)
-        else:
-            # Default to stdio for unknown transport
-            app.run(transport="stdio")
+        app.run(transport="stdio")
 
     except KeyboardInterrupt:
         logger.info("Server shutdown requested by user")
