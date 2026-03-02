@@ -70,6 +70,7 @@ class GeminiClient:
             contents: list[Any] = []
 
             if reference_images:
+
                 def process_image(b64: str) -> Any:
                     image_bytes = base64.b64decode(b64)
                     return Image.open(io.BytesIO(image_bytes))
