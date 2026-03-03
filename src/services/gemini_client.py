@@ -70,9 +70,17 @@ class GeminiClient:
             contents: list[Any] = []
 
             if reference_images:
-                for ref_image_b64 in reference_images[:14]:
-                    image_bytes = base64.b64decode(ref_image_b64)
-                    contents.append(Image.open(io.BytesIO(image_bytes)))
+
+                def process_image(b64: str) -> Any:
+                    image_bytes = base64.b64decode(b64)
+                    return Image.open(io.BytesIO(image_bytes))
+
+                tasks = [
+                    asyncio.to_thread(process_image, ref_image_b64)
+                    for ref_image_b64 in reference_images[:14]
+                ]
+                processed_images = await asyncio.gather(*tasks)
+                contents.extend(processed_images)
 
             contents.append(prompt)
 
@@ -235,10 +243,8 @@ class GeminiClient:
 
                 if hasattr(part, "inline_data") and part.inline_data:
                     try:
-                        pil_image = Image.open(io.BytesIO(part.inline_data.data))
-                        buffer = io.BytesIO()
-                        pil_image.save(buffer, format="PNG")
-                        image_b64 = base64.b64encode(buffer.getvalue()).decode()
+                        # Directly encode the bytes without re-encoding via PIL
+                        image_b64 = base64.b64encode(part.inline_data.data).decode()
 
                         if is_thought:
                             thoughts.append(

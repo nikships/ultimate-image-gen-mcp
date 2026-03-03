@@ -7,6 +7,7 @@ reference image support, Google Search grounding (Web & Image), and thinking mod
 """
 
 import base64
+import functools
 import json
 import logging
 from typing import Any
@@ -25,12 +26,23 @@ from ..services import ImageService
 logger = logging.getLogger(__name__)
 
 
+@functools.lru_cache
+def get_image_service(api_key: str, enable_enhancement: bool, timeout: int) -> ImageService:
+    """Get or create a cached ImageService instance."""
+    return ImageService(
+        api_key=api_key,
+        enable_enhancement=enable_enhancement,
+        timeout=timeout,
+    )
+
+
 async def generate_image_tool(
     prompt: str,
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
     reference_image_paths: list[str] | None = None,
+    reference_images_data: list[str] | None = None,
     enable_google_search: bool = False,
     enable_image_search: bool = False,
     response_modalities: list[str] | None = None,
@@ -47,6 +59,7 @@ async def generate_image_tool(
         image_size: Image resolution: 512px, 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
         reference_image_paths: Paths to reference images (up to 14)
+        reference_images_data: Base64-encoded reference images (bypasses disk read if provided)
         enable_google_search: Use Google Web Search for real-time data grounding
         enable_image_search: Use Google Image Search for visual context
         response_modalities: Response types (TEXT, IMAGE - default: both)
@@ -68,82 +81,80 @@ async def generate_image_tool(
     settings = get_settings()
     model = settings.api.default_model
 
-    image_service = ImageService(
+    image_service = get_image_service(
         api_key=settings.api.gemini_api_key,
         enable_enhancement=settings.api.enable_prompt_enhancement,
         timeout=settings.api.request_timeout,
     )
 
-    try:
-        params: dict[str, Any] = {
+    params: dict[str, Any] = {
+        "aspect_ratio": aspect_ratio,
+        "image_size": image_size,
+        "output_format": output_format,
+    }
+
+    if reference_images_data:
+        params["reference_images"] = reference_images_data[:14]
+    elif reference_image_paths:
+        reference_images = []
+        for img_path in reference_image_paths[:14]:
+            try:
+                _, image_bytes = validate_reference_image(img_path)
+                reference_images.append(base64.b64encode(image_bytes).decode())
+            except Exception as e:
+                logger.warning(f"Reference image validation failed for {img_path}: {e}")
+        if reference_images:
+            params["reference_images"] = reference_images
+
+    if enable_google_search:
+        params["enable_google_search"] = True
+
+    if enable_image_search:
+        params["enable_image_search"] = True
+
+    if response_modalities:
+        params["response_modalities"] = response_modalities
+
+    params["thinking_level"] = thinking_level
+
+    results = await image_service.generate(
+        prompt=prompt,
+        model=model,
+        **params,
+    )
+
+    response: dict[str, Any] = {
+        "success": True,
+        "model": model,
+        "prompt": prompt,
+        "images_generated": len(results),
+        "images": [],
+        "metadata": {
             "aspect_ratio": aspect_ratio,
             "image_size": image_size,
             "output_format": output_format,
+            "thinking_level": thinking_level,
+        },
+    }
+
+    for result in results:
+        image_info: dict[str, Any] = {
+            "index": result.index,
+            "size": result.get_size(),
+            "timestamp": result.timestamp.isoformat(),
         }
 
-        if reference_image_paths:
-            reference_images = []
-            for img_path in reference_image_paths[:14]:
-                try:
-                    _, image_bytes = validate_reference_image(img_path)
-                    reference_images.append(base64.b64encode(image_bytes).decode())
-                except Exception as e:
-                    logger.warning(f"Reference image validation failed for {img_path}: {e}")
-            if reference_images:
-                params["reference_images"] = reference_images
+        if save_to_disk:
+            file_path = result.save(settings.output_dir)
+            image_info["path"] = str(file_path)
+            image_info["filename"] = file_path.name
 
-        if enable_google_search:
-            params["enable_google_search"] = True
+        if "enhanced_prompt" in result.metadata:
+            image_info["enhanced_prompt"] = result.metadata["enhanced_prompt"]
 
-        if enable_image_search:
-            params["enable_image_search"] = True
+        response["images"].append(image_info)
 
-        if response_modalities:
-            params["response_modalities"] = response_modalities
-
-        params["thinking_level"] = thinking_level
-
-        results = await image_service.generate(
-            prompt=prompt,
-            model=model,
-            **params,
-        )
-
-        response: dict[str, Any] = {
-            "success": True,
-            "model": model,
-            "prompt": prompt,
-            "images_generated": len(results),
-            "images": [],
-            "metadata": {
-                "aspect_ratio": aspect_ratio,
-                "image_size": image_size,
-                "output_format": output_format,
-                "thinking_level": thinking_level,
-            },
-        }
-
-        for result in results:
-            image_info: dict[str, Any] = {
-                "index": result.index,
-                "size": result.get_size(),
-                "timestamp": result.timestamp.isoformat(),
-            }
-
-            if save_to_disk:
-                file_path = result.save(settings.output_dir)
-                image_info["path"] = str(file_path)
-                image_info["filename"] = file_path.name
-
-            if "enhanced_prompt" in result.metadata:
-                image_info["enhanced_prompt"] = result.metadata["enhanced_prompt"]
-
-            response["images"].append(image_info)
-
-        return response
-
-    finally:
-        await image_service.close()
+    return response
 
 
 def register_generate_image_tool(mcp_server: Any) -> None:

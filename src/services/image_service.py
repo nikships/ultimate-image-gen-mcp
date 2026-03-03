@@ -73,8 +73,19 @@ class ImageResult:
         return f"{slug}{index_str}-{time_suffix}-{micros:06d}-{uuid_prefix}.{self.output_format}"
 
     def get_size(self) -> int:
-        """Return the image size in bytes."""
-        return len(base64.b64decode(self.image_data))
+        """Return the image size in bytes without decoding.
+
+        Calculates size mathematically: (len * 3) / 4 - padding
+        Padding characters (=) at the end of base64 strings indicate
+        how many bytes were used for padding (0, 1, or 2).
+        """
+        s = self.image_data.rstrip()
+        n = len(s)
+        if n == 0:
+            return 0
+        # Count padding characters (always at the end)
+        padding = s.count("=")
+        return (n * 3) // 4 - padding
 
 
 class ImageService:
