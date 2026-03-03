@@ -1,10 +1,13 @@
 """Image service for Gemini 3.1 Flash Image generation."""
 
 import base64
+import io
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from PIL import Image
 
 from ..config.constants import GEMINI_MODELS
 from ..core.exceptions import ImageProcessingError
@@ -40,13 +43,12 @@ class ImageResult:
         try:
             # Convert to requested format if not PNG
             if self.output_format != "png":
-                import io
-                from PIL import Image
-
                 image_bytes = base64.b64decode(self.image_data)
                 img = Image.open(io.BytesIO(image_bytes))
                 buffer = io.BytesIO()
-                save_format = "JPEG" if self.output_format in ("jpg", "jpeg") else self.output_format.upper()
+                save_format = (
+                    "JPEG" if self.output_format in ("jpg", "jpeg") else self.output_format.upper()
+                )
                 img.save(buffer, format=save_format)
                 output_path.write_bytes(buffer.getvalue())
             else:
