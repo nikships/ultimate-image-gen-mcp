@@ -108,7 +108,7 @@ def validate_reference_image(path: str | Path) -> tuple[Path, bytes]:
     return file_path, image_bytes
 
 
-def coerce_image_paths(value: "str | list[str] | None") -> "list[str] | None":
+def coerce_image_paths(value: str | list[str] | None) -> list[str] | None:
     """Normalize a reference-image-paths argument into a list of paths.
 
     Some MCP clients serialize a ``list[str]`` argument whose JSON schema lacks
