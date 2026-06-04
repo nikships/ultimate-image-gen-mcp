@@ -14,6 +14,7 @@ from typing import Any
 
 from ..config import get_settings
 from ..core import (
+    coerce_image_paths,
     validate_aspect_ratio,
     validate_image_format,
     validate_image_size,
@@ -41,7 +42,7 @@ async def generate_image_tool(
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
-    reference_image_paths: list[str] | None = None,
+    reference_image_paths: str | list[str] | None = None,
     reference_images_data: list[str] | None = None,
     enable_google_search: bool = False,
     enable_image_search: bool = False,
@@ -69,6 +70,9 @@ async def generate_image_tool(
     Returns:
         Dict with generated images and metadata
     """
+    # Some MCP clients serialize the list[str] argument to a string; normalize.
+    reference_image_paths = coerce_image_paths(reference_image_paths)
+
     validate_prompt(prompt)
     validate_aspect_ratio(aspect_ratio)
     image_size = validate_image_size(image_size)
@@ -166,7 +170,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
-        reference_image_paths: list[str] | None = None,
+        reference_image_paths: str | list[str] | None = None,
         enable_google_search: bool = False,
         enable_image_search: bool = False,
         response_modalities: list[str] | None = None,

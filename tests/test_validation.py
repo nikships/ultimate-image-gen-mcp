@@ -110,3 +110,36 @@ class TestValidation:
             validate_image_size(invalid_size)
         assert f"Invalid image size '{invalid_size}'" in str(excinfo.value)
         assert "Must be one of:" in str(excinfo.value)
+
+
+@pytest.mark.unit
+class TestCoerceImagePaths:
+    """Tests for coerce_image_paths (handles clients that send a str)."""
+
+    def test_none_and_empty(self):
+        from src.core.validation import coerce_image_paths
+
+        assert coerce_image_paths(None) is None
+        assert coerce_image_paths("") is None
+        assert coerce_image_paths("   ") is None
+
+    def test_single_path_string(self):
+        from src.core.validation import coerce_image_paths
+
+        assert coerce_image_paths("/a.png") == ["/a.png"]
+        assert coerce_image_paths("  /x y.png  ") == ["/x y.png"]
+
+    def test_json_encoded_list_string(self):
+        from src.core.validation import coerce_image_paths
+
+        assert coerce_image_paths('["/a.png", "/b.png"]') == ["/a.png", "/b.png"]
+
+    def test_malformed_json_treated_as_path(self):
+        from src.core.validation import coerce_image_paths
+
+        assert coerce_image_paths("[not json") == ["[not json"]
+
+    def test_existing_list_passthrough(self):
+        from src.core.validation import coerce_image_paths
+
+        assert coerce_image_paths(["/a.png", "/b.png"]) == ["/a.png", "/b.png"]
