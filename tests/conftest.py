@@ -1,6 +1,7 @@
 import sys
-from unittest.mock import MagicMock
 import types
+from unittest.mock import MagicMock
+
 
 # Create mock for modules that are not installed to allow importing src.core.validation
 def mock_module(name, **attrs):
@@ -11,6 +12,7 @@ def mock_module(name, **attrs):
         setattr(m, k, v)
     sys.modules[name] = m
     return m
+
 
 # Mock pydantic
 mock_module("pydantic", Field=MagicMock())
