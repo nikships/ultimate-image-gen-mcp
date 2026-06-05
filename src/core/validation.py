@@ -2,6 +2,7 @@
 
 import base64
 import io
+import json
 import re
 from pathlib import Path
 
@@ -105,6 +106,37 @@ def validate_reference_image(path: str | Path) -> tuple[Path, bytes]:
         raise ValidationError(f"Invalid image file {file_path}: {e}") from e
 
     return file_path, image_bytes
+
+
+def coerce_image_paths(value: str | list[str] | None) -> list[str] | None:
+    """Normalize a reference-image-paths argument into a list of paths.
+
+    Some MCP clients serialize a ``list[str]`` argument whose JSON schema lacks
+    a top-level ``type`` (as produced by the ``list[str] | None`` annotation)
+    into a plain string before sending it. Accepting ``str`` here and coercing
+    it back to a list keeps those clients working. Handles:
+
+    - ``None`` / empty string -> ``None``
+    - a JSON-encoded list string (e.g. ``'["/a.png", "/b.png"]'``) -> parsed list
+    - a single path string -> ``[path]``
+    - an existing list -> returned unchanged
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        if stripped.startswith("["):
+            try:
+                parsed = json.loads(stripped)
+            except json.JSONDecodeError:
+                return [stripped]
+            if isinstance(parsed, list):
+                return [str(item) for item in parsed]
+            return [str(parsed)]
+        return [stripped]
+    return list(value)
 
 
 def validate_reference_images_count(image_paths: list[str]) -> None:

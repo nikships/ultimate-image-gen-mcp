@@ -10,6 +10,7 @@ from typing import Any
 
 from ..config import MAX_BATCH_SIZE, get_settings
 from ..core import (
+    coerce_image_paths,
     validate_batch_size,
     validate_prompts_list,
     validate_reference_image,
@@ -25,7 +26,7 @@ async def batch_generate_images(
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
-    reference_image_paths: list[str] | None = None,
+    reference_image_paths: str | list[str] | None = None,
     batch_size: int | None = None,
     enable_google_search: bool = False,
     enable_image_search: bool = False,
@@ -40,7 +41,8 @@ async def batch_generate_images(
         aspect_ratio: Aspect ratio for all images
         image_size: Image resolution for all images
         output_format: Output format for all images
-        reference_image_paths: Shared reference image paths (up to 14)
+        reference_image_paths: Shared reference image path(s), up to 14.
+            Accepts a single path (str) or a list of paths (list[str]).
         batch_size: Number of images to process in parallel (default: from config)
         enable_google_search: Enable Google Web Search grounding
         enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
@@ -51,6 +53,9 @@ async def batch_generate_images(
         Dict with batch results
     """
     validate_prompts_list(prompts)
+
+    # Some MCP clients serialize the list[str] argument to a string; normalize.
+    reference_image_paths = coerce_image_paths(reference_image_paths)
 
     # Validate reference images count if provided
     # Pre-process reference images once to avoid redundant disk I/O
@@ -150,7 +155,7 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
-        reference_image_paths: list[str] | None = None,
+        reference_image_paths: str | list[str] | None = None,
         batch_size: int | None = None,
         enable_google_search: bool = False,
         enable_image_search: bool = False,
@@ -168,7 +173,8 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
             aspect_ratio: Aspect ratio for all images (default: 1:1)
             image_size: Image resolution for all images (default: 2K)
             output_format: Image format for all images (default: png)
-            reference_image_paths: Shared reference image paths (up to 14)
+            reference_image_paths: Shared reference image path(s), up to 14.
+            Accepts a single path (str) or a list of paths (list[str]).
             batch_size: Parallel batch size (default: from config)
             enable_google_search: Enable Google Web Search grounding
             enable_image_search: Enable Google Image Search

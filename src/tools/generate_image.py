@@ -14,6 +14,7 @@ from typing import Any
 
 from ..config import get_settings
 from ..core import (
+    coerce_image_paths,
     validate_aspect_ratio,
     validate_image_format,
     validate_image_size,
@@ -41,7 +42,7 @@ async def generate_image_tool(
     aspect_ratio: str = "1:1",
     image_size: str = "2K",
     output_format: str = "png",
-    reference_image_paths: list[str] | None = None,
+    reference_image_paths: str | list[str] | None = None,
     reference_images_data: list[str] | None = None,
     enable_google_search: bool = False,
     enable_image_search: bool = False,
@@ -58,7 +59,8 @@ async def generate_image_tool(
         aspect_ratio: Image aspect ratio (1:1, 16:9, 9:16, etc.)
         image_size: Image resolution: 512px, 1K, 2K, or 4K (default: 2K)
         output_format: Image format (png, jpeg, webp)
-        reference_image_paths: Paths to reference images (up to 14)
+        reference_image_paths: Reference image path(s), up to 14. Accepts a
+            single path (str) or a list of paths (list[str]).
         reference_images_data: Base64-encoded reference images (bypasses disk read if provided)
         enable_google_search: Use Google Web Search for real-time data grounding
         enable_image_search: Use Google Image Search for visual context
@@ -69,6 +71,9 @@ async def generate_image_tool(
     Returns:
         Dict with generated images and metadata
     """
+    # Some MCP clients serialize the list[str] argument to a string; normalize.
+    reference_image_paths = coerce_image_paths(reference_image_paths)
+
     validate_prompt(prompt)
     validate_aspect_ratio(aspect_ratio)
     image_size = validate_image_size(image_size)
@@ -166,7 +171,7 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         aspect_ratio: str = "1:1",
         image_size: str = "2K",
         output_format: str = "png",
-        reference_image_paths: list[str] | None = None,
+        reference_image_paths: str | list[str] | None = None,
         enable_google_search: bool = False,
         enable_image_search: bool = False,
         response_modalities: list[str] | None = None,
@@ -234,8 +239,10 @@ def register_generate_image_tool(mcp_server: Any) -> None:
 
         ► output_format: "png" (default), "jpeg", "webp"
 
-        ► reference_image_paths (optional, list[str]):
-          Paths to up to 14 reference images (10 objects + 4 characters).
+        ► reference_image_paths (optional, str | list[str]):
+          Path(s) to up to 14 reference images (10 objects + 4 characters).
+          Accepts either a single path string (e.g. "/path/to/ref.png") or a
+          list of path strings (e.g. ["/a.png", "/b.png"]).
 
         ► thinking_level (optional, str, default: "minimal"):
           Controls reasoning effort: "minimal" (fast) or "high" (best quality, slower).

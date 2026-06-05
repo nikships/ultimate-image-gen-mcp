@@ -12,6 +12,7 @@ from .exceptions import (
     ValidationError,
 )
 from .validation import (
+    coerce_image_paths,
     sanitize_filename,
     validate_aspect_ratio,
     validate_base64_image,
@@ -38,6 +39,7 @@ __all__ = [
     "ImageProcessingError",
     "FileOperationError",
     # Validation
+    "coerce_image_paths",
     "validate_prompt",
     "validate_model",
     "validate_aspect_ratio",
