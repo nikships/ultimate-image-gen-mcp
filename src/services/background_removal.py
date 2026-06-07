@@ -162,9 +162,7 @@ def remove_green_screen(
         # Hue wraps around the 0/255 boundary (e.g. reds); accept either end.
         low_wrapped = low % 256
         high_wrapped = high % 256
-        hue_mask = hue.point(
-            lambda p: 255 if (p >= low_wrapped or p <= high_wrapped) else 0
-        )
+        hue_mask = hue.point(lambda p: 255 if (p >= low_wrapped or p <= high_wrapped) else 0)
     else:
         hue_mask = hue.point(lambda p: 255 if low <= p <= high else 0)
 

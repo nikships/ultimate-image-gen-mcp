@@ -219,9 +219,7 @@ def validate_background_removal_mode(mode: str) -> str:
     normalized = mode.lower()
     if normalized not in BACKGROUND_REMOVAL_MODES:
         available = ", ".join(BACKGROUND_REMOVAL_MODES)
-        raise ValidationError(
-            f"Invalid background_removal_mode '{mode}'. Available: {available}"
-        )
+        raise ValidationError(f"Invalid background_removal_mode '{mode}'. Available: {available}")
     if normalized not in SUPPORTED_BACKGROUND_REMOVAL_MODES:
         supported = ", ".join(SUPPORTED_BACKGROUND_REMOVAL_MODES)
         raise ValidationError(
@@ -247,7 +245,5 @@ def validate_matting_quality(quality: str) -> str:
     normalized = quality.lower()
     if normalized not in MATTING_QUALITY_LEVELS:
         available = ", ".join(MATTING_QUALITY_LEVELS)
-        raise ValidationError(
-            f"Invalid matting_quality '{quality}'. Must be one of: {available}"
-        )
+        raise ValidationError(f"Invalid matting_quality '{quality}'. Must be one of: {available}")
     return normalized
