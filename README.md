@@ -17,12 +17,13 @@
 - **Google Search Grounding**: Real-time data (weather, stocks, events, maps)
 - **Google Image Search**: Visual context from web images — the model can FIND real images of anything
 - **Thinking Mode**: Configurable reasoning - "minimal" (fast) or "high" (best quality)
+- **Transparent Backgrounds**: Best-effort transparent PNG/WebP cut-outs via a chromakey post-processing pipeline (Pillow only — no extra dependencies)
 
 > **This model is different.** Unlike traditional image generators that rely solely on training data, Gemini 3.1 Flash has live access to Google Search and Image Search. It can find actual references for products, people, events, or anything that exists online. "Way of Wade 12" → generates the REAL shoe. "Tony Hawk" → finds real photos. Don't over-prompt — let the model cook.
 
 ### Server Features
 - **Batch Processing**: Generate multiple images in parallel (up to 8 concurrent)
-- **22 Expert Prompt Templates**: MCP slash commands for photography, logos, cinematics, storyboards, and more
+- **28 Expert Prompt Templates**: MCP slash commands for photography, logos, app icons, cinematics, storyboards, and more
 - **Flexible Aspect Ratios**: 14 options — 1:1, 1:4, 1:8, 2:3, 3:2, 3:4, 4:1, 4:3, 4:5, 5:4, 8:1, 9:16, 16:9, 21:9
 - **Configurable via Environment Variables**: Output directory, default size, timeouts, and more
 
@@ -175,12 +176,39 @@ Generate an image with Gemini 3.1 Flash Image.
 | `enable_image_search` | bool | `false` | **USE THIS** for visual references. The model finds actual images to work from. This is huge — it can reference real photos of anyone/anything. |
 | `thinking_level` | string | `minimal` | `minimal` (fast) or `high` (best quality) |
 | `response_modalities` | list | `["TEXT","IMAGE"]` | `["TEXT","IMAGE"]`, `["IMAGE"]`, or `["TEXT"]` |
+| `transparent_background` | bool | `false` | Produce a transparent PNG/WebP cut-out via post-processing (see below) |
+| `background_removal_mode` | string | `auto` | `auto`/`chroma` (chromakey HSV pipeline). `local`/`external` reserved for future ML modes |
+| `preserve_original` | bool | `true` | Also keep the original green-background image, not just the cut-out |
+| `alpha_output_format` | string | `png` | Alpha-capable output format: `png` or `webp` |
+| `matting_quality` | string | `balanced` | Edge-cleanup aggressiveness: `fast`, `balanced`, or `best` |
 
 **Image size guide:**
 - `512px` — fastest, lowest cost (0.5K)
 - `1K` — fast, good for testing (~1-2 MB)
 - `2K` — recommended for most use cases (~3-5 MB)
 - `4K` — maximum quality for production assets (~8-15 MB)
+
+#### Transparent backgrounds
+
+Gemini cannot emit true alpha/transparent pixels directly, so transparency is implemented as a **post-processing** step. When `transparent_background=true`, the image is generated on a solid chromakey-green (`#00FF00`) background with a thin white subject outline, then the green is removed in HSV colour space and the result is saved as an alpha PNG/WebP. This approach (inspired by [Phil Schmid's transparent-sticker guide](https://www.philschmid.de/generate-stickers)) is fast, predictable, and needs no extra ML dependencies.
+
+Each returned image gains: `transparent_path`, `background_removed`, `background_removal_mode`, `alpha_output_format`, and `post_processing_warnings`. By default the original is preserved alongside the cut-out (`preserve_original=true`).
+
+```jsonc
+// generate_image(prompt="a friendly robot mascot", transparent_background=true)
+{
+  "images": [{
+    "path": "/path/to/a-friendly-robot-mascot-...png",            // original (green bg)
+    "transparent_path": "/path/to/a-friendly-robot-mascot-...-transparent.png",
+    "background_removed": true,
+    "background_removal_mode": "chroma",
+    "alpha_output_format": "png",
+    "post_processing_warnings": []
+  }]
+}
+```
+
+Best for stickers, logos, icons, product cut-outs, and overlays. Background removal is best-effort and may struggle with hair/fur, glass, soft shadows, or subjects that themselves contain bright chromakey green.
 
 ---
 
@@ -198,12 +226,17 @@ Generate multiple images in parallel.
 | `batch_size` | int | `8` | Max concurrent requests |
 | `enable_image_search` | bool | `false` | Use Google Image Search for visual context |
 | `thinking_level` | string | `minimal` | `minimal` or `high` |
+| `transparent_background` | bool | `false` | Apply chromakey transparency to every image in the batch |
+| `background_removal_mode` | string | `auto` | `auto`/`chroma` (see `generate_image`) |
+| `preserve_original` | bool | `true` | Keep the original green-background images too |
+| `alpha_output_format` | string | `png` | Transparent output format: `png` or `webp` |
+| `matting_quality` | string | `balanced` | Edge-cleanup aggressiveness: `fast`, `balanced`, `best` |
 
 ---
 
 ## MCP Prompt Templates
 
-22 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`.
+28 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`. The `app_icon` template pairs with `transparent_background` to produce clean, platform-aware icon cut-outs.
 
 | Command | Description | Default aspect ratio |
 |---------|-------------|----------------------|

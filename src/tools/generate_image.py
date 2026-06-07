@@ -10,19 +10,28 @@ import base64
 import functools
 import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from ..config import get_settings
 from ..core import (
     coerce_image_paths,
+    validate_alpha_output_format,
     validate_aspect_ratio,
+    validate_background_removal_mode,
     validate_image_format,
     validate_image_size,
+    validate_matting_quality,
     validate_prompt,
     validate_reference_image,
     validate_reference_images_count,
 )
 from ..services import ImageService
+from ..services.background_removal import (
+    build_chromakey_prompt,
+    remove_background_from_base64,
+    save_transparent_image,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +58,11 @@ async def generate_image_tool(
     response_modalities: list[str] | None = None,
     thinking_level: str = "minimal",
     save_to_disk: bool = True,
+    transparent_background: bool = False,
+    background_removal_mode: str = "auto",
+    preserve_original: bool = True,
+    alpha_output_format: str = "png",
+    matting_quality: str = "balanced",
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
@@ -67,6 +81,15 @@ async def generate_image_tool(
         response_modalities: Response types (TEXT, IMAGE - default: both)
         thinking_level: Thinking level - "minimal" or "high" (default: minimal)
         save_to_disk: Save images to output directory
+        transparent_background: Produce a transparent-background copy via
+            post-processing. Gemini cannot emit alpha directly, so the image is
+            generated on a chromakey-green background and the green is removed
+            afterwards (see services/background_removal.py).
+        background_removal_mode: Removal strategy ("auto"/"chroma" supported).
+        preserve_original: Keep the original (green-background) image on disk in
+            addition to the transparent output (default: True).
+        alpha_output_format: Format for the transparent output ("png" or "webp").
+        matting_quality: Edge cleanup aggressiveness ("fast", "balanced", "best").
 
     Returns:
         Dict with generated images and metadata
@@ -78,6 +101,12 @@ async def generate_image_tool(
     validate_aspect_ratio(aspect_ratio)
     image_size = validate_image_size(image_size)
     validate_image_format(output_format)
+
+    # Validate transparent-background options up front (fail fast).
+    if transparent_background:
+        background_removal_mode = validate_background_removal_mode(background_removal_mode)
+        alpha_output_format = validate_alpha_output_format(alpha_output_format)
+        matting_quality = validate_matting_quality(matting_quality)
 
     # Validate reference images count if provided
     if reference_image_paths:
@@ -122,9 +151,14 @@ async def generate_image_tool(
 
     params["thinking_level"] = thinking_level
 
+    # For transparent output, render on a chromakey-green background and skip
+    # prompt enhancement so the chromakey instructions reach the model intact.
+    generation_prompt = build_chromakey_prompt(prompt) if transparent_background else prompt
+
     results = await image_service.generate(
-        prompt=prompt,
+        prompt=generation_prompt,
         model=model,
+        enhance_prompt=not transparent_background,
         **params,
     )
 
@@ -142,6 +176,21 @@ async def generate_image_tool(
         },
     }
 
+    if transparent_background:
+        response["metadata"].update(
+            {
+                "transparent_background": True,
+                "background_removal_mode": "chroma",
+                "matting_quality": matting_quality,
+                "alpha_output_format": alpha_output_format,
+                "preserve_original": preserve_original,
+            }
+        )
+
+    # Keep the original (green-background) image when not generating transparency,
+    # or when the caller explicitly asked to preserve it.
+    save_original = save_to_disk and (preserve_original or not transparent_background)
+
     for result in results:
         image_info: dict[str, Any] = {
             "index": result.index,
@@ -149,10 +198,28 @@ async def generate_image_tool(
             "timestamp": result.timestamp.isoformat(),
         }
 
-        if save_to_disk:
+        if save_original:
             file_path = result.save(settings.output_dir)
             image_info["path"] = str(file_path)
             image_info["filename"] = file_path.name
+
+        if transparent_background and save_to_disk:
+            _apply_transparent_background(
+                result=result,
+                image_info=image_info,
+                output_dir=settings.output_dir,
+                mode=background_removal_mode,
+                matting_quality=matting_quality,
+                alpha_output_format=alpha_output_format,
+            )
+        elif transparent_background:
+            # Honor save_to_disk=False: transparency is a disk artifact, so skip
+            # the write and surface a clear warning instead of a silent no-op.
+            image_info["background_removed"] = False
+            image_info["post_processing_warnings"] = [
+                "transparent_background was requested but save_to_disk=False; "
+                "no transparent image was written."
+            ]
 
         if "enhanced_prompt" in result.metadata:
             image_info["enhanced_prompt"] = result.metadata["enhanced_prompt"]
@@ -160,6 +227,54 @@ async def generate_image_tool(
         response["images"].append(image_info)
 
     return response
+
+
+def _apply_transparent_background(
+    *,
+    result: Any,
+    image_info: dict[str, Any],
+    output_dir: Any,
+    mode: str,
+    matting_quality: str,
+    alpha_output_format: str,
+) -> None:
+    """Run background removal on a generated image and record the result.
+
+    Mutates ``image_info`` in place, adding ``transparent_path``,
+    ``background_removed``, ``background_removal_mode``, ``alpha_output_format``
+    and ``post_processing_warnings``. Failures are caught and surfaced as a
+    warning rather than aborting the whole generation.
+    """
+    from uuid import uuid4
+
+    try:
+        removal = remove_background_from_base64(
+            result.image_data,
+            mode=mode,
+            matting_quality=matting_quality,
+        )
+        base_stem = (
+            str(image_info["filename"]).rsplit(".", 1)[0]
+            if "filename" in image_info
+            else f"transparent-{uuid4().hex[:8]}"
+        )
+        transparent_path = save_transparent_image(
+            removal.image,
+            Path(output_dir) / f"{base_stem}-transparent.{alpha_output_format}",
+            alpha_output_format,
+        )
+        image_info["transparent_path"] = str(transparent_path)
+        image_info["background_removed"] = removal.background_removed
+        image_info["background_removal_mode"] = removal.mode
+        image_info["alpha_output_format"] = alpha_output_format
+        image_info["post_processing_warnings"] = removal.warnings
+    except Exception as e:
+        # Best-effort: a post-processing failure must never abort generation.
+        logger.warning(f"Transparent-background post-processing failed: {e}")
+        image_info["background_removed"] = False
+        image_info["post_processing_warnings"] = [f"Background removal failed: {e}"]
+
+    return None
 
 
 def register_generate_image_tool(mcp_server: Any) -> None:
@@ -176,6 +291,11 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         enable_image_search: bool = False,
         response_modalities: list[str] | None = None,
         thinking_level: str = "minimal",
+        transparent_background: bool = False,
+        background_removal_mode: str = "auto",
+        preserve_original: bool = True,
+        alpha_output_format: str = "png",
+        matting_quality: str = "balanced",
     ) -> str:
         """
         ═══════════════════════════════════════════════════════════════════════════════
@@ -258,6 +378,35 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         PRO TIP: Use "high" thinking when using Google/Image search for best results.
 
 
+        🪟 TRANSPARENT BACKGROUNDS (post-processing):
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        Gemini cannot emit true alpha/transparent pixels directly. When you set
+        transparent_background=True, the image is generated on a solid chromakey
+        green (#00FF00) background and the green is removed AFTER generation via
+        an HSV chromakey pipeline (Pillow only — no extra dependencies).
+
+        ► transparent_background (bool, default: False):
+          Produce a transparent PNG/WebP copy via post-processing. Best for
+          stickers, logos, icons, product cut-outs, and overlays.
+
+        ► background_removal_mode (str, default: "auto"):
+          "auto"/"chroma" use the chromakey HSV pipeline. (local/external ML
+          modes are reserved for future use.)
+
+        ► preserve_original (bool, default: True):
+          Also keep the original green-background image, not just the cut-out.
+
+        ► alpha_output_format (str, default: "png"):
+          Alpha-capable output format: "png" or "webp".
+
+        ► matting_quality (str, default: "balanced"):
+          Edge cleanup aggressiveness: "fast", "balanced", or "best".
+
+        Each image in the response gains: transparent_path, background_removed,
+        background_removal_mode, alpha_output_format, and post_processing_warnings.
+        Background removal is best-effort and may struggle with hair, glass,
+        shadows, or subjects that themselves contain bright chromakey green.
+
 
         📤 RESPONSE FORMAT:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -296,6 +445,11 @@ def register_generate_image_tool(mcp_server: Any) -> None:
                 enable_image_search=enable_image_search,
                 response_modalities=response_modalities,
                 thinking_level=thinking_level,
+                transparent_background=transparent_background,
+                background_removal_mode=background_removal_mode,
+                preserve_original=preserve_original,
+                alpha_output_format=alpha_output_format,
+                matting_quality=matting_quality,
             )
 
             return json.dumps(result, indent=2)

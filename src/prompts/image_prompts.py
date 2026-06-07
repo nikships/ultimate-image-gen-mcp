@@ -70,6 +70,60 @@ Call `generate_image` with these parameters:
 - response_modalities: ["IMAGE"]"""
 
     @mcp_server.prompt()
+    def app_icon(
+        concept: str,
+        platform: str = "generic",
+        style: str = "modern gradient",
+        primary_color: str = "blue",
+    ) -> str:
+        """High-quality app icon — a single bold symbol, platform-aware, transparency-ready."""
+        platform_notes = {
+            "ios": (
+                "iOS applies its own rounded 'squircle' mask automatically, so avoid "
+                "baking in heavily rounded corners; the App Store also requires the final "
+                "icon to be flattened onto an opaque background (no alpha channel)."
+            ),
+            "android": (
+                "For an Android adaptive icon, keep the symbol within the central safe "
+                "zone (about the middle 66%, leaving ~25% padding on every side), since "
+                "launchers crop icons to circles, squircles, and rounded squares."
+            ),
+            "macos": (
+                "For macOS, present a rounded-square badge inset with comfortable padding "
+                "and a soft drop shadow, matching the current macOS icon grid."
+            ),
+            "generic": (
+                "Center the icon with even padding so it stays crisp on any background or "
+                "crop shape."
+            ),
+        }
+        platform_note = platform_notes.get(platform.lower(), platform_notes["generic"])
+
+        return f"""You are a senior app icon designer.
+
+Generate an image using the following crafted prompt:
+
+PROMPT:
+"App icon representing {concept}. {style.title()} style. \
+A single, bold, instantly recognizable symbol — absolutely no text, letters, or words. \
+Centered with generous padding, a strong clean silhouette, and crisp vector-sharp edges \
+that stay legible even at 16x16 px. Cohesive, limited palette built around {primary_color}, \
+with subtle depth and smooth lighting. One focal concept only, no busy detail. \
+{platform_note}"
+
+Call `generate_image` with these parameters:
+- prompt: (use the PROMPT above)
+- aspect_ratio: "1:1"
+- image_size: "2K"
+- transparent_background: true
+- alpha_output_format: "png"
+- response_modalities: ["IMAGE"]
+
+The transparent PNG drops cleanly onto any background, store listing, or platform export. \
+For an iOS App Store submission, flatten it onto an opaque background first (Apple rejects \
+icons that contain an alpha channel)."""
+
+    @mcp_server.prompt()
     def cinematic_scene(
         subject: str,
         mood: str,
