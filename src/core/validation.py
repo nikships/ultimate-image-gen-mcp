@@ -10,12 +10,16 @@ from PIL import Image
 
 from ..config.constants import (
     ALL_MODELS,
+    ALPHA_OUTPUT_FORMATS,
     ASPECT_RATIOS,
+    BACKGROUND_REMOVAL_MODES,
     IMAGE_FORMATS,
     IMAGE_SIZES,
+    MATTING_QUALITY_LEVELS,
     MAX_IMAGE_SIZE_BYTES,
     MAX_PROMPT_LENGTH,
     MAX_REFERENCE_IMAGES,
+    SUPPORTED_BACKGROUND_REMOVAL_MODES,
 )
 from .exceptions import ValidationError
 
@@ -201,4 +205,49 @@ def validate_image_size(size: str) -> str:
     if normalized not in IMAGE_SIZES:
         available = ", ".join(IMAGE_SIZES)
         raise ValidationError(f"Invalid image size '{size}'. Must be one of: {available}")
+    return normalized
+
+
+def validate_background_removal_mode(mode: str) -> str:
+    """Validate and normalize the transparent-background removal mode.
+
+    Returns the lowercased mode. Raises ValidationError for unknown modes, and
+    for modes that are recognised but not yet implemented (``local``,
+    ``external``) so callers get an actionable message instead of a silent
+    no-op.
+    """
+    normalized = mode.lower()
+    if normalized not in BACKGROUND_REMOVAL_MODES:
+        available = ", ".join(BACKGROUND_REMOVAL_MODES)
+        raise ValidationError(
+            f"Invalid background_removal_mode '{mode}'. Available: {available}"
+        )
+    if normalized not in SUPPORTED_BACKGROUND_REMOVAL_MODES:
+        supported = ", ".join(SUPPORTED_BACKGROUND_REMOVAL_MODES)
+        raise ValidationError(
+            f"background_removal_mode '{mode}' is not implemented yet. "
+            f"Currently supported: {supported}."
+        )
+    return normalized
+
+
+def validate_alpha_output_format(format_str: str) -> str:
+    """Validate and normalize the alpha (transparent) output format."""
+    normalized = format_str.lower()
+    if normalized not in ALPHA_OUTPUT_FORMATS:
+        available = ", ".join(ALPHA_OUTPUT_FORMATS)
+        raise ValidationError(
+            f"Invalid alpha_output_format '{format_str}'. Must support transparency: {available}"
+        )
+    return normalized
+
+
+def validate_matting_quality(quality: str) -> str:
+    """Validate and normalize the matting-quality level."""
+    normalized = quality.lower()
+    if normalized not in MATTING_QUALITY_LEVELS:
+        available = ", ".join(MATTING_QUALITY_LEVELS)
+        raise ValidationError(
+            f"Invalid matting_quality '{quality}'. Must be one of: {available}"
+        )
     return normalized

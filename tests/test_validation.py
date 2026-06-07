@@ -8,10 +8,13 @@ from src.config.constants import (
 )
 from src.core.exceptions import ValidationError
 from src.core.validation import (
+    validate_alpha_output_format,
     validate_aspect_ratio,
+    validate_background_removal_mode,
     validate_batch_size,
     validate_image_format,
     validate_image_size,
+    validate_matting_quality,
     validate_model,
     validate_prompt,
 )
@@ -126,6 +129,45 @@ class TestValidation:
             validate_image_size(invalid_size)
         assert f"Invalid image size '{invalid_size}'" in str(excinfo.value)
         assert "Must be one of:" in str(excinfo.value)
+
+
+@pytest.mark.unit
+class TestTransparentBackgroundValidation:
+    """Tests for the transparent-background option validators."""
+
+    @pytest.mark.parametrize("mode,expected", [("auto", "auto"), ("CHROMA", "chroma")])
+    def test_background_removal_mode_valid(self, mode, expected):
+        assert validate_background_removal_mode(mode) == expected
+
+    @pytest.mark.parametrize("mode", ["local", "external"])
+    def test_background_removal_mode_not_implemented(self, mode):
+        with pytest.raises(ValidationError) as excinfo:
+            validate_background_removal_mode(mode)
+        assert "not implemented" in str(excinfo.value)
+
+    def test_background_removal_mode_unknown(self):
+        with pytest.raises(ValidationError) as excinfo:
+            validate_background_removal_mode("bogus")
+        assert "Invalid background_removal_mode" in str(excinfo.value)
+
+    @pytest.mark.parametrize("fmt,expected", [("png", "png"), ("WEBP", "webp")])
+    def test_alpha_output_format_valid(self, fmt, expected):
+        assert validate_alpha_output_format(fmt) == expected
+
+    @pytest.mark.parametrize("fmt", ["jpeg", "jpg", "gif"])
+    def test_alpha_output_format_invalid(self, fmt):
+        with pytest.raises(ValidationError) as excinfo:
+            validate_alpha_output_format(fmt)
+        assert "support transparency" in str(excinfo.value)
+
+    @pytest.mark.parametrize("quality,expected", [("fast", "fast"), ("BEST", "best")])
+    def test_matting_quality_valid(self, quality, expected):
+        assert validate_matting_quality(quality) == expected
+
+    def test_matting_quality_invalid(self):
+        with pytest.raises(ValidationError) as excinfo:
+            validate_matting_quality("ultra")
+        assert "Invalid matting_quality" in str(excinfo.value)
 
 
 @pytest.mark.unit
