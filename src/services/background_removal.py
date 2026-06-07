@@ -158,13 +158,9 @@ def remove_green_screen(
 
     low = hue_center - hue_tolerance
     high = hue_center + hue_tolerance
-    if low < 0 or high > 255:
-        # Hue wraps around the 0/255 boundary (e.g. reds); accept either end.
-        low_wrapped = low % 256
-        high_wrapped = high % 256
-        hue_mask = hue.point(lambda p: 255 if (p >= low_wrapped or p <= high_wrapped) else 0)
-    else:
-        hue_mask = hue.point(lambda p: 255 if low <= p <= high else 0)
+    # Modulo arithmetic accepts the hue band and transparently handles the
+    # 0/255 hue wraparound (e.g. reds) in a single branchless expression.
+    hue_mask = hue.point(lambda p: 255 if (p - low) % 256 <= high - low else 0)
 
     sat_mask = sat.point(lambda p: 255 if p >= min_saturation else 0)
     val_mask = val.point(lambda p: 255 if p >= min_value else 0)
@@ -180,7 +176,9 @@ def remove_green_screen(
     result.putalpha(alpha)
 
     total_pixels = rgb.width * rgb.height
-    removed_pixels = sum(background_mask.point(lambda p: 1 if p else 0).getdata())
+    # The mask is a binary single-channel image, so histogram()[255] counts the
+    # background pixels in C — far faster/lighter than getdata() at 2K/4K.
+    removed_pixels = background_mask.histogram()[255]
     removed_ratio = (removed_pixels / total_pixels) if total_pixels else 0.0
 
     warnings: list[str] = []
@@ -283,6 +281,9 @@ def save_transparent_image(image: Image.Image, output_path: Path, alpha_output_f
     rgba = image if image.mode == "RGBA" else image.convert("RGBA")
     save_format = "PNG" if fmt == "png" else "WEBP"
     output_path = output_path.with_suffix(f".{fmt}")
+    # The destination dir may not exist yet (e.g. preserve_original=False, so the
+    # original save that would have created it was skipped).
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     rgba.save(output_path, format=save_format)
     logger.info("Saved transparent image to %s", output_path)
     return output_path

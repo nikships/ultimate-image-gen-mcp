@@ -10,6 +10,7 @@ import base64
 import functools
 import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from ..config import get_settings
@@ -202,7 +203,7 @@ async def generate_image_tool(
             image_info["path"] = str(file_path)
             image_info["filename"] = file_path.name
 
-        if transparent_background:
+        if transparent_background and save_to_disk:
             _apply_transparent_background(
                 result=result,
                 image_info=image_info,
@@ -211,6 +212,14 @@ async def generate_image_tool(
                 matting_quality=matting_quality,
                 alpha_output_format=alpha_output_format,
             )
+        elif transparent_background:
+            # Honor save_to_disk=False: transparency is a disk artifact, so skip
+            # the write and surface a clear warning instead of a silent no-op.
+            image_info["background_removed"] = False
+            image_info["post_processing_warnings"] = [
+                "transparent_background was requested but save_to_disk=False; "
+                "no transparent image was written."
+            ]
 
         if "enhanced_prompt" in result.metadata:
             image_info["enhanced_prompt"] = result.metadata["enhanced_prompt"]
@@ -251,7 +260,7 @@ def _apply_transparent_background(
         )
         transparent_path = save_transparent_image(
             removal.image,
-            output_dir / f"{base_stem}-transparent.{alpha_output_format}",
+            Path(output_dir) / f"{base_stem}-transparent.{alpha_output_format}",
             alpha_output_format,
         )
         image_info["transparent_path"] = str(transparent_path)

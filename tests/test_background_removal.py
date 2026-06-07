@@ -110,6 +110,14 @@ class TestRemoveGreenScreen:
         assert result.removed_ratio < bg._MIN_REMOVED_RATIO
         assert result.warnings  # low-confidence warning present
 
+    def test_hue_wraparound_handles_red(self):
+        # Red sits at hue 0; a red-centred key must wrap across the 0/255
+        # boundary and still match (exercises the branchless modulo logic).
+        red = Image.new("RGB", (30, 30), (255, 0, 0))
+        result = bg.remove_green_screen(red, hue_center=0, hue_tolerance=12)
+        assert result.image.getpixel((0, 0))[3] == 0
+        assert result.removed_ratio > 0.9
+
     def test_higher_matting_quality_removes_at_least_as_much(self):
         img = _chromakey_image()
         fast = bg.make_transparent(img, matting_quality="fast")
@@ -160,3 +168,10 @@ class TestSaveTransparentImage:
         result = bg.remove_green_screen(_chromakey_image())
         with pytest.raises(ValueError):
             bg.save_transparent_image(result.image, tmp_path / "x.jpg", "jpeg")
+
+    def test_creates_missing_parent_dirs(self, tmp_path):
+        result = bg.remove_green_screen(_chromakey_image())
+        nested = tmp_path / "deep" / "nested" / "out.png"
+        out = bg.save_transparent_image(result.image, nested, "png")
+        assert out.exists()
+        assert out.parent == nested.parent
