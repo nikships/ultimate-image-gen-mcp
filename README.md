@@ -23,7 +23,7 @@
 
 ### Server Features
 - **Batch Processing**: Generate multiple images in parallel (up to 8 concurrent)
-- **22 Expert Prompt Templates**: MCP slash commands for photography, logos, cinematics, storyboards, and more
+- **28 Expert Prompt Templates**: MCP slash commands for photography, logos, app icons, cinematics, storyboards, and more
 - **Flexible Aspect Ratios**: 14 options — 1:1, 1:4, 1:8, 2:3, 3:2, 3:4, 4:1, 4:3, 4:5, 5:4, 8:1, 9:16, 16:9, 21:9
 - **Configurable via Environment Variables**: Output directory, default size, timeouts, and more
 
@@ -236,7 +236,7 @@ Generate multiple images in parallel.
 
 ## MCP Prompt Templates
 
-22 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`.
+28 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`. The `app_icon` template pairs with `transparent_background` to produce clean, platform-aware icon cut-outs.
 
 | Command | Description | Default aspect ratio |
 |---------|-------------|----------------------|
