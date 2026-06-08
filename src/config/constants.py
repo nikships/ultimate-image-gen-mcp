@@ -53,7 +53,6 @@ RESPONSE_MODALITIES = ["TEXT", "IMAGE"]
 # post-processing step via the two-pass difference matte.
 # Formats that support an alpha channel for transparent output.
 ALPHA_OUTPUT_FORMATS = ["png", "webp"]
-DEFAULT_ALPHA_OUTPUT_FORMAT = "png"
 
 THINKING_LEVELS = ["minimal", "high"]
 DEFAULT_THINKING_LEVEL = "minimal"
@@ -65,7 +64,5 @@ MAX_IMAGE_SIZE_MB = 20
 MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024
 
 DEFAULT_TIMEOUT = 60
-ENHANCEMENT_TIMEOUT = 30
-BATCH_TIMEOUT = 120
 
 DEFAULT_OUTPUT_DIR = str(Path.home() / "gemini_images")
