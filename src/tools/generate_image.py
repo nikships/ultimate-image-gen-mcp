@@ -12,6 +12,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from ..config import get_settings
 from ..core import (
@@ -246,8 +247,6 @@ async def _apply_transparent_background(
     only a hard failure (no pass-2 image, decode error) is caught and surfaced
     as a warning rather than aborting generation.
     """
-    from uuid import uuid4
-
     try:
         # Pass 2: edit the white-background image to a black background. Feed the
         # pass-1 image back as a reference and reuse the same aspect/size so the
@@ -294,8 +293,6 @@ async def _apply_transparent_background(
         logger.warning(f"Transparent-background post-processing failed: {e}")
         image_info["background_removed"] = False
         image_info["post_processing_warnings"] = [f"Difference matting failed: {e}"]
-
-    return None
 
 
 def register_generate_image_tool(mcp_server: Any) -> None:

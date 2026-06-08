@@ -1,10 +1,15 @@
 """Image service for Gemini 3.1 Flash Image generation."""
 
 import base64
+import io
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
+
+from PIL import Image
 
 from ..config.constants import GEMINI_MODELS
 from ..core.exceptions import ImageProcessingError
@@ -40,12 +45,7 @@ class ImageResult:
         try:
             # Convert to requested format if not PNG
             if self.output_format != "png":
-                import io
-
-                from PIL import Image
-
-                image_bytes = base64.b64decode(self.image_data)
-                img = Image.open(io.BytesIO(image_bytes))
+                img = Image.open(io.BytesIO(base64.b64decode(self.image_data)))
                 buffer = io.BytesIO()
                 save_format = (
                     "JPEG" if self.output_format in ("jpg", "jpeg") else self.output_format.upper()
@@ -61,9 +61,6 @@ class ImageResult:
 
     def _generate_filename(self) -> str:
         """Generate a unique filename from the prompt and a high-res timestamp."""
-        import re
-        from uuid import uuid4
-
         slug = re.sub(r"[^a-z0-9]+", "-", self.prompt[:60].lower()).strip("-")
         # Use microsecond precision + UUID prefix to prevent collisions
         time_suffix = self.timestamp.strftime("%H%M%S")

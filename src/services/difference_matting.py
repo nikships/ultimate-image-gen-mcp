@@ -231,16 +231,15 @@ def extract_alpha_two_pass(
     # --- Un-premultiply foreground colour from the black frame ---------------
     # On black, obs_black = α·FG ⇒ FG = obs_black · 255 / alpha. max(a,1) avoids
     # div-by-0; where α≈0 the black-frame colour is also ≈0, so FG → ~0 anyway.
-    bch = black.split()
     recovered = [
         _img_eval(
             "convert(min((c * 255) / max(a, 1), 255), 'L')",
-            c=bch[i],
+            c=channel,
             a=alpha,
         )
-        for i in range(3)
+        for channel in black.split()
     ]
-    result_img = Image.merge("RGBA", (recovered[0], recovered[1], recovered[2], alpha))
+    result_img = Image.merge("RGBA", (*recovered, alpha))
 
     # --- Confidence / alignment metrics --------------------------------------
     negative_mean, channel_spread_mean = _alignment_signals(white, black)

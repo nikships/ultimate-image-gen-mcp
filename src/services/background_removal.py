@@ -230,8 +230,7 @@ def make_transparent(
     Raises:
         ValueError: If an unsupported ``mode`` is requested.
     """
-    resolved_mode = "chroma" if mode in ("auto", "chroma") else mode
-    if resolved_mode != "chroma":
+    if mode not in ("auto", "chroma"):
         raise ValueError(
             f"Unsupported background_removal_mode '{mode}'. "
             "Only 'chroma' (or 'auto') is currently implemented."

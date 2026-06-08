@@ -20,6 +20,11 @@ from ..core.exceptions import (
 
 logger = logging.getLogger(__name__)
 
+THINKING_LEVELS = {
+    "minimal": types.ThinkingLevel.MINIMAL,
+    "high": types.ThinkingLevel.HIGH,
+}
+
 
 class GeminiClient:
     """Client for Gemini 3.1 Flash Image API using the official Google GenAI SDK."""
@@ -89,7 +94,7 @@ class GeminiClient:
 
             image_config = types.ImageConfig(
                 aspect_ratio=aspect_ratio,
-                image_size=image_size if image_size else None,
+                image_size=image_size or None,
             )
 
             config_args: dict[str, Any] = {
@@ -119,12 +124,8 @@ class GeminiClient:
                     logger.info("Forcing minimal thinking due to search tool usage")
 
             # Thinking Config - minimal or high
-            thinking_level_map = {
-                "minimal": types.ThinkingLevel.MINIMAL,
-                "high": types.ThinkingLevel.HIGH,
-            }
             config_args["thinking_config"] = types.ThinkingConfig(
-                thinking_level=thinking_level_map.get(
+                thinking_level=THINKING_LEVELS.get(
                     effective_thinking_level.lower(), types.ThinkingLevel.MINIMAL
                 ),
             )
