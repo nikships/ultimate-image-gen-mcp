@@ -76,25 +76,38 @@ Call `generate_image` with these parameters:
         style: str = "modern gradient",
         primary_color: str = "blue",
     ) -> str:
-        """High-quality app icon — a single bold symbol, platform-aware, transparency-ready."""
+        """High-quality app icon — a single bold symbol, platform-aware, export-ready.
+
+        Produces an icon whose artwork fills the canvas edge-to-edge with no
+        baked-in drop shadow, bezel, frame, glass trim, or outer outline. The
+        result is ready to drop straight into a `.iconset` directory for
+        `iconutil`, or to upload as a store listing asset (after flattening
+        onto an opaque background for iOS).
+        """
         platform_notes = {
             "ios": (
-                "iOS applies its own rounded 'squircle' mask automatically, so avoid "
-                "baking in heavily rounded corners; the App Store also requires the final "
-                "icon to be flattened onto an opaque background (no alpha channel)."
+                "iOS applies its own rounded-corner mask, so render the artwork "
+                "as a full-bleed square (no rounded corners drawn in the artwork "
+                "itself). The App Store also requires the final upload to be "
+                "flattened onto an opaque background (no alpha channel)."
             ),
             "android": (
-                "For an Android adaptive icon, keep the symbol within the central safe "
-                "zone (about the middle 66%, leaving ~25% padding on every side), since "
-                "launchers crop icons to circles, squircles, and rounded squares."
+                "For an Android adaptive icon, keep the focal symbol within the "
+                "central safe zone (about the middle 66%, leaving ~25% padding "
+                "on every side), since launchers crop to circles, squircles, "
+                "and rounded squares. The artwork itself should still fill the "
+                "canvas — the launcher does the cropping."
             ),
             "macos": (
-                "For macOS, present a rounded-square badge inset with comfortable padding "
-                "and a soft drop shadow, matching the current macOS icon grid."
+                "The rounded-square (squircle) artwork fills the canvas — its "
+                "rounded corners touch within ~1-2% of the canvas edges, with "
+                "only tiny corner triangles outside the squircle. macOS draws "
+                "its own shadow at render time, so do NOT bake a drop shadow, "
+                "ground reflection, or surface into the image."
             ),
             "generic": (
-                "Center the icon with even padding so it stays crisp on any background or "
-                "crop shape."
+                "Render the icon to fill the canvas with no surrounding mockup, "
+                "presentation surface, or device-frame styling."
             ),
         }
         platform_note = platform_notes.get(platform.lower(), platform_notes["generic"])
@@ -106,10 +119,14 @@ Generate an image using the following crafted prompt:
 PROMPT:
 "App icon representing {concept}. {style.title()} style. \
 A single, bold, instantly recognizable symbol — absolutely no text, letters, or words. \
-Centered with generous padding, a strong clean silhouette, and crisp vector-sharp edges \
-that stay legible even at 16x16 px. Cohesive, limited palette built around {primary_color}, \
-with subtle depth and smooth lighting. One focal concept only, no busy detail. \
-{platform_note}"
+The artwork IS the final exported icon, not a render of an icon sitting on a surface. \
+The icon fills the canvas: no outer frame, no bezel, no glass trim, no metallic border, \
+no chrome ring, no outer outline, no drop shadow baked into the image, no ground plane, \
+and no 'icon-on-mockup' presentation. Inside the icon, the focal symbol sits centered \
+with generous interior padding around it. Strong clean silhouette, crisp vector-sharp \
+edges that stay legible at 16x16 px. Cohesive, limited palette built around \
+{primary_color}, with subtle depth and smooth lighting confined *inside* the icon shape \
+only. One focal concept, no busy detail. {platform_note}"
 
 Call `generate_image` with these parameters:
 - prompt: (use the PROMPT above)
@@ -119,9 +136,10 @@ Call `generate_image` with these parameters:
 - alpha_output_format: "png"
 - response_modalities: ["IMAGE"]
 
-The transparent PNG drops cleanly onto any background, store listing, or platform export. \
-For an iOS App Store submission, flatten it onto an opaque background first (Apple rejects \
-icons that contain an alpha channel)."""
+The resulting transparent PNG is ready to drop straight into a `.iconset` directory and \
+convert to `.icns` via `iconutil`, or to upload as a store listing asset. For an iOS App \
+Store submission, flatten onto an opaque background first (Apple rejects icons that \
+contain an alpha channel)."""
 
     @mcp_server.prompt()
     def cinematic_scene(

@@ -6,8 +6,10 @@ that runs *after* generation. The default (and currently only) strategy is a
 **chromakey** pipeline:
 
 1. The image is generated on a solid chromakey-green (``#00FF00``) background
-   with a thin white subject outline (see :func:`build_chromakey_prompt`). This
-   only makes the matting problem easier — it is not "prompting for
+   with crisp opaque subject edges and explicitly NO outline, ring, halo, bezel
+   or frame around the subject (see :func:`build_chromakey_prompt`). This makes
+   the matting problem easier without inducing the model to bake a visible
+   white halo or chrome bezel into the result — it is not "prompting for
    transparency".
 2. The green background is detected in **HSV** colour space (which separates
    hue from saturation/brightness) and removed, keying on a tight hue band that
@@ -93,10 +95,11 @@ def build_chromakey_prompt(prompt: str) -> str:
     """Wrap a user prompt with chromakey-green generation instructions.
 
     The returned prompt asks the model to render the subject on a solid
-    ``#00FF00`` background with a thin white outline and crisp edges, which makes
-    the subsequent green-screen removal reliable. This biases *generation* to
-    simplify *post-processing*; it never claims the model can output
-    transparency itself.
+    ``#00FF00`` background with razor-sharp opaque edges and **no outline,
+    halo, bezel or frame** around the subject. Anti-aliased green fringing is
+    handled by the post-processing dilation step, so we no longer ask the model
+    to bake in a white outline — that instruction was being interpreted as a
+    visible chrome/metallic ring around app icons and badged subjects.
 
     Args:
         prompt: The original user prompt describing the subject.
@@ -113,14 +116,17 @@ def build_chromakey_prompt(prompt: str) -> str:
         f"green background. Use EXACTLY hex color {CHROMAKEY_GREEN_HEX} "
         "(RGB 0, 255, 0). The entire background must be this single pure green "
         "with NO gradients, NO shadows, and NO lighting effects.\n"
-        "2. WHITE OUTLINE: Give the subject a clean white outline/border "
-        "(2-3 pixels wide) separating it from the green background to prevent "
-        "colour bleeding.\n"
+        "2. CRISP OPAQUE EDGES — NO OUTLINE: The subject must meet the green "
+        "background with razor-sharp, fully opaque edges. Do NOT draw any "
+        "outline, ring, halo, stroke, bezel, frame, glass trim, metallic "
+        "border, drop shadow, or glow around the subject's outer silhouette. "
+        "The post-process keys out anti-aliased green fringing automatically.\n"
         "3. NO GREEN ON SUBJECT: The subject itself should avoid pure chromakey "
         "green. If green is needed, use a clearly different shade such as dark "
         "forest green or teal.\n"
-        "4. SHARP EDGES: Keep the subject edges crisp and well-defined.\n"
-        "5. CENTERED: Center the subject with padding on all sides."
+        "4. PLACEMENT: Center the subject unless the user prompt explicitly "
+        "asks for full-bleed framing (e.g. an app-icon squircle whose rounded "
+        "corners touch the canvas edges)."
     )
 
 

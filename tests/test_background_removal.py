@@ -65,7 +65,10 @@ class TestBuildChromakeyPrompt:
         result = bg.build_chromakey_prompt("a cute robot")
         assert "a cute robot" in result
         assert bg.CHROMAKEY_GREEN_HEX in result
-        assert "WHITE OUTLINE" in result
+        # The prompt must actively forbid outer outlines/bezels — that
+        # instruction was previously inducing chrome rings on app icons.
+        assert "NO OUTLINE" in result
+        assert "bezel" in result.lower()
         assert "CHROMAKEY" in result.upper()
 
     def test_strips_whitespace(self):
