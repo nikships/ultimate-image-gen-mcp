@@ -73,16 +73,18 @@ Call `generate_image` with these parameters:
     def app_icon(
         concept: str,
         platform: str = "generic",
-        style: str = "modern gradient",
-        primary_color: str = "blue",
+        style: str = "",
+        primary_color: str = "",
     ) -> str:
-        """High-quality app icon — a single bold symbol, platform-aware, export-ready.
+        """High-quality app icon — premium, dimensional, export-ready.
 
-        Produces an icon whose artwork fills the canvas edge-to-edge with no
-        baked-in drop shadow, bezel, frame, glass trim, or outer outline. The
-        result is ready to drop straight into a `.iconset` directory for
-        `iconutil`, or to upload as a store listing asset (after flattening
-        onto an opaque background for iOS).
+        No baked-in style or palette defaults — the model is free to choose
+        the most striking interpretation of the concept unless the caller
+        explicitly passes ``style`` or ``primary_color``. The artwork fills
+        the canvas edge-to-edge with no drop shadow, bezel, frame, glass
+        trim, or outer outline, so the result drops straight into a
+        ``.iconset`` directory for ``iconutil`` (or onto a store listing
+        after flattening for iOS).
         """
         platform_notes = {
             "ios": (
@@ -92,7 +94,7 @@ Call `generate_image` with these parameters:
                 "flattened onto an opaque background (no alpha channel)."
             ),
             "android": (
-                "For an Android adaptive icon, keep the focal symbol within the "
+                "For an Android adaptive icon, keep the focal subject within the "
                 "central safe zone (about the middle 66%, leaving ~25% padding "
                 "on every side), since launchers crop to circles, squircles, "
                 "and rounded squares. The artwork itself should still fill the "
@@ -112,21 +114,41 @@ Call `generate_image` with these parameters:
         }
         platform_note = platform_notes.get(platform.lower(), platform_notes["generic"])
 
+        style_phrase = f"{style.strip().title()} style. " if style.strip() else ""
+        palette_phrase = (
+            f"Anchor the palette around {primary_color.strip()}, extended with "
+            "complementary highlight and rim tones for dimensional shading. "
+            if primary_color.strip()
+            else "Choose a palette that makes the concept feel inevitable — rich tonal "
+            "depth with clear light direction, not a single flat hue. "
+        )
+
         return f"""You are a senior app icon designer.
 
 Generate an image using the following crafted prompt:
 
 PROMPT:
-"App icon representing {concept}. {style.title()} style. \
-A single, bold, instantly recognizable symbol — absolutely no text, letters, or words. \
-The artwork IS the final exported icon, not a render of an icon sitting on a surface. \
-The icon fills the canvas: no outer frame, no bezel, no glass trim, no metallic border, \
+"App icon for {concept}. {style_phrase}{palette_phrase}A single bold focal form — \
+no text, letters, numbers, or words anywhere in the image. \
+\
+The icon is premium and dimensional, in the spirit of macOS Sonoma, iOS 18, Vision Pro, \
+Linear, Raycast, and Arc: a tangible, sculpted, three-dimensional focal subject living \
+inside a deep atmospheric interior. Volumetric light spills from within — a soft inner \
+glow radiating from the subject, fine specular highlights catching edges and facets, \
+gentle haze pooling in the deeper recesses, sparse luminous particles or faint network \
+filaments drifting through the space around the form. Cinematic lighting with a clear \
+key, a subtle rim, and shadowed wells that give the interior real depth. \
+Interpret '{concept}' as one unforgettable focal object — sculpted geometry, layered \
+translucency, faceted crystal, glassy strata, liquid metal, luminous filament, organic \
+bioluminescence, whatever interpretation hits hardest for this specific concept. \
+Make a deliberate, distinctive creative choice — not the safest possible reading. \
+\
+COMPOSITION: The artwork IS the exported icon. It fills the canvas edge-to-edge as a \
+rounded-square (squircle) — no outer frame, no bezel, no glass trim, no metallic border, \
 no chrome ring, no outer outline, no drop shadow baked into the image, no ground plane, \
-and no 'icon-on-mockup' presentation. Inside the icon, the focal symbol sits centered \
-with generous interior padding around it. Strong clean silhouette, crisp vector-sharp \
-edges that stay legible at 16x16 px. Cohesive, limited palette built around \
-{primary_color}, with subtle depth and smooth lighting confined *inside* the icon shape \
-only. One focal concept, no busy detail. {platform_note}"
+no presentation surface, no mockup framing. Inside the squircle, the focal subject sits \
+centered with generous breathing room. Silhouette stays readable at 16x16 px while the \
+rendering itself remains dimensional and cinematic. {platform_note}"
 
 Call `generate_image` with these parameters:
 - prompt: (use the PROMPT above)
@@ -773,3 +795,40 @@ Call `generate_image` with these parameters:
 - aspect_ratio: "21:9"
 - image_size: "4K"
 - response_modalities: ["TEXT", "IMAGE"]"""
+
+    # Every prompt above is a closure registered with the MCP server via the
+    # `@mcp_server.prompt()` decorator. Static analyzers (Pyright, etc.) can't
+    # see the decorator's side effects on `mcp_server` and flag each closure as
+    # "not accessed". Referencing them here makes the registrations explicit to
+    # the analyzer without changing runtime behaviour.
+    _registered_prompts = (
+        photography_shot,
+        logo_design,
+        app_icon,
+        cinematic_scene,
+        product_mockup,
+        batch_storyboard,
+        macro_shot,
+        fashion_portrait,
+        technical_cutaway,
+        flat_lay,
+        action_freeze,
+        night_street,
+        drone_aerial,
+        stylized_3d_render,
+        sem_microscopy,
+        double_exposure,
+        architectural_viz,
+        isometric_illustration,
+        food_photography,
+        motion_blur,
+        typography_physical,
+        retro_futurism,
+        surreal_dreamscape,
+        character_sheet,
+        pbr_texture,
+        historical_photo,
+        bioluminescent_nature,
+        silhouette_shot,
+    )
+    del _registered_prompts
