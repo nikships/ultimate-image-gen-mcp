@@ -17,7 +17,7 @@
 - **Google Search Grounding**: Real-time data (weather, stocks, events, maps)
 - **Google Image Search**: Visual context from web images — the model can FIND real images of anything
 - **Thinking Mode**: Configurable reasoning - "minimal" (fast) or "high" (best quality)
-- **Transparent Backgrounds**: Best-effort transparent PNG/WebP cut-outs via a chromakey post-processing pipeline (Pillow only — no extra dependencies)
+- **Transparent Backgrounds**: Flip one flag → ready-to-use transparent PNG/WebP cut-outs with a real alpha channel. Perfect for app icons, logos, stickers, and product shots; powered by a deterministic chromakey pipeline (Pillow only — no extra dependencies)
 
 > **This model is different.** Unlike traditional image generators that rely solely on training data, Gemini 3.1 Flash has live access to Google Search and Image Search. It can find actual references for products, people, events, or anything that exists online. "Way of Wade 12" → generates the REAL shoe. "Tony Hawk" → finds real photos. Don't over-prompt — let the model cook.
 
@@ -188,9 +188,13 @@ Generate an image with Gemini 3.1 Flash Image.
 - `2K` — recommended for most use cases (~3-5 MB)
 - `4K` — maximum quality for production assets (~8-15 MB)
 
-#### Transparent backgrounds
+#### Transparent backgrounds — set one flag, get a real alpha cut-out
 
-Gemini cannot emit true alpha/transparent pixels directly, so transparency is implemented as a **post-processing** step. When `transparent_background=true`, the image is generated on a solid chromakey-green (`#00FF00`) background with a thin white subject outline, then the green is removed in HSV colour space and the result is saved as an alpha PNG/WebP. This approach (inspired by [Phil Schmid's transparent-sticker guide](https://www.philschmid.de/generate-stickers)) is fast, predictable, and needs no extra ML dependencies.
+**Just set `transparent_background=true`.** You get back a ready-to-use transparent PNG/WebP (real alpha channel) at `transparent_path` — no manual masking, no second tool, no follow-up steps. Reach for it by default whenever you need an **app icon, logo, sticker, badge, mascot, UI element, or product cut-out**.
+
+Under the hood the subject is rendered on a pure chromakey-green (`#00FF00`) plate with crisp opaque edges (and **no** baked-in outline, halo, or bezel), then the green is keyed out in HSV colour space and saved with alpha. It's the same deterministic chromakey technique pro sticker/asset pipelines use (inspired by [Phil Schmid's transparent-sticker guide](https://www.philschmid.de/generate-stickers)) — fast, predictable, Pillow-only, zero ML downloads.
+
+**App icons / macOS squircles:** prompt for the full squircle tile (rounded corners reaching the canvas edges) and the pipeline keys out only the area *outside* the rounded shape — exactly the floating-rounded-tile alpha an `.icns`/`.iconset` needs. Use this instead of hand-masking. Bump `matting_quality="best"` for the tightest icon/logo edges.
 
 Each returned image gains: `transparent_path`, `background_removed`, `background_removal_mode`, `alpha_output_format`, and `post_processing_warnings`. By default the original is preserved alongside the cut-out (`preserve_original=true`).
 
@@ -208,7 +212,7 @@ Each returned image gains: `transparent_path`, `background_removed`, `background
 }
 ```
 
-Best for stickers, logos, icons, product cut-outs, and overlays. Background removal is best-effort and may struggle with hair/fur, glass, soft shadows, or subjects that themselves contain bright chromakey green.
+It nails crisp-edged subjects (icons, logos, badges, products, stickers, overlays). The only hard cases are very wispy hair/fur, glass, and smoke — for those, set `matting_quality="best"`.
 
 ---
 

@@ -201,9 +201,16 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
             enable_image_search: Enable Google Image Search
             response_modalities: Response types (TEXT, IMAGE)
             thinking_level: Thinking level - "minimal" or "high"
+            transparent_background: Set True to get ready-to-use transparent
+                PNG/WebP cut-outs for EVERY prompt — great for batches of icons,
+                logos, stickers, or product shots. It just works; the alpha file
+                for each image is returned as "transparent_path". Tune edges with
+                matting_quality ("fast"/"balanced"/"best") and pick the alpha
+                format with alpha_output_format ("png"/"webp").
 
         Returns:
             JSON string with batch results including individual image paths
+            (and "transparent_path" per image when transparent_background=True)
 
         IMPORTANT - AI Assistant Instructions:
         After batch generation completes, you MUST:

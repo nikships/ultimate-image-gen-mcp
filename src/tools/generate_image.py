@@ -312,6 +312,8 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ✓ Reference Images: Up to 14 images (10 objects, 4 characters)
         ✓ Grounding: Google Web Search & Image Search
         ✓ Thinking Mode: Configurable reasoning (minimal or high)
+        ✓ Transparent Backgrounds: one flag → ready-to-use alpha PNG/WebP
+          cut-outs (icons, logos, stickers). See below — it just works.
         ✓ SynthID Watermarking: Invisible watermark on all images
 
 
@@ -378,34 +380,51 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         PRO TIP: Use "high" thinking when using Google/Image search for best results.
 
 
-        🪟 TRANSPARENT BACKGROUNDS (post-processing):
+        🪟 TRANSPARENT BACKGROUNDS — JUST SET transparent_background=True:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        Gemini cannot emit true alpha/transparent pixels directly. When you set
-        transparent_background=True, the image is generated on a solid chromakey
-        green (#00FF00) background and the green is removed AFTER generation via
-        an HSV chromakey pipeline (Pillow only — no extra dependencies).
+        ✅ THIS WORKS GREAT. Set transparent_background=True and you get back a
+        ready-to-use transparent PNG/WebP with a real alpha channel — no extra
+        tools, no manual masking, no follow-up steps. Use it directly.
+
+        Behind the scenes the subject is rendered on a pure chromakey-green
+        plate and the green is keyed out in HSV color space (the same proven
+        technique pro sticker/asset pipelines use — deterministic, fast, Pillow-
+        only, zero ML downloads). You don't prompt for transparency; you just
+        ask for it and the cut-out comes back clean.
+
+        🎯 PERFECT FOR (reach for it by default on these):
+          • App icons & macOS squircles  • Logos & wordmarks
+          • Stickers & emoji             • UI / product cut-outs
+          • Badges, mascots, overlays    • Anything you'll composite later
+
+        🍏 APP ICONS: prompt for the full squircle tile (rounded corners running
+        to the canvas edges) and the pipeline keys out ONLY the area outside the
+        rounded shape — giving you exactly the floating-rounded-tile alpha a
+        .icns/.iconset needs. This is the right tool for app-icon work; don't
+        hand-mask it yourself.
 
         ► transparent_background (bool, default: False):
-          Produce a transparent PNG/WebP copy via post-processing. Best for
-          stickers, logos, icons, product cut-outs, and overlays.
-
-        ► background_removal_mode (str, default: "auto"):
-          "auto"/"chroma" use the chromakey HSV pipeline. (local/external ML
-          modes are reserved for future use.)
-
-        ► preserve_original (bool, default: True):
-          Also keep the original green-background image, not just the cut-out.
-
-        ► alpha_output_format (str, default: "png"):
-          Alpha-capable output format: "png" or "webp".
+          Flip to True to get the transparent cut-out. That's the whole API.
 
         ► matting_quality (str, default: "balanced"):
-          Edge cleanup aggressiveness: "fast", "balanced", or "best".
+          Edge crispness: "fast", "balanced", or "best". Bump to "best" for
+          icons/logos where you want the tightest edge.
 
-        Each image in the response gains: transparent_path, background_removed,
-        background_removal_mode, alpha_output_format, and post_processing_warnings.
-        Background removal is best-effort and may struggle with hair, glass,
-        shadows, or subjects that themselves contain bright chromakey green.
+        ► alpha_output_format (str, default: "png"):
+          Alpha output format: "png" (default) or "webp".
+
+        ► preserve_original (bool, default: True):
+          Also keeps the pre-key plate next to the cut-out; set False for just
+          the transparent file.
+
+        ► background_removal_mode (str, default: "auto"):
+          Leave as "auto" (chromakey HSV pipeline).
+
+        Each image returns transparent_path (your alpha file) plus
+        background_removed / post_processing_warnings so you can confirm the cut
+        succeeded. It nails crisp-edged subjects (icons, logos, products); very
+        wispy hair/fur, glass, or smoke are the only hard cases — for those,
+        push matting_quality="best".
 
 
         📤 RESPONSE FORMAT:
@@ -428,11 +447,16 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ⚠️ IMPORTANT - AI ASSISTANT INSTRUCTIONS:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         1. Parse JSON to get file path: result["images"][0]["path"]
+           (when transparent_background=True, use result["images"][0]["transparent_path"]).
         2. Inform user of the EXACT file path.
         3. Open image in native OS viewer using Bash:
            - macOS: `open "/path/to/image.png"`
            - Linux: `xdg-open "/path/to/image.png"`
            - Windows: `start "" "/path/to/image.png"`
+
+        💡 Need a transparent icon/logo/sticker/cut-out? Don't hand-mask or reach
+        for another tool — just call this tool with transparent_background=True
+        and use the returned transparent_path. It's built for exactly that.
         """
         try:
             result = await generate_image_tool(
