@@ -33,10 +33,8 @@ async def batch_generate_images(
     response_modalities: list[str] | None = None,
     thinking_level: str = "minimal",
     transparent_background: bool = False,
-    background_removal_mode: str = "auto",
     preserve_original: bool = True,
     alpha_output_format: str = "png",
-    matting_quality: str = "balanced",
 ) -> dict[str, Any]:
     """
     Generate multiple images from a list of prompts.
@@ -53,12 +51,11 @@ async def batch_generate_images(
         enable_image_search: Enable Google Image Search (only for Gemini 3.1 Flash)
         response_modalities: Response types (TEXT, IMAGE)
         thinking_level: Thinking level (minimal or high)
-        transparent_background: Produce transparent-background copies via
-            chromakey post-processing (applied to every prompt in the batch).
-        background_removal_mode: Removal strategy ("auto"/"chroma" supported).
-        preserve_original: Keep the original green-background images too.
+        transparent_background: Produce transparent-background copies via the
+            two-pass difference matte (applied to every prompt in the batch;
+            each prompt costs a second edit-to-black model call).
+        preserve_original: Keep the pass-1 (white-background) images too.
         alpha_output_format: Transparent output format ("png" or "webp").
-        matting_quality: Edge cleanup aggressiveness ("fast"/"balanced"/"best").
 
     Returns:
         Dict with batch results
@@ -117,10 +114,8 @@ async def batch_generate_images(
                 response_modalities=response_modalities,
                 thinking_level=thinking_level,
                 transparent_background=transparent_background,
-                background_removal_mode=background_removal_mode,
                 preserve_original=preserve_original,
                 alpha_output_format=alpha_output_format,
-                matting_quality=matting_quality,
             )
             for prompt in batch
         ]
@@ -178,10 +173,8 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
         response_modalities: list[str] | None = None,
         thinking_level: str = "minimal",
         transparent_background: bool = False,
-        background_removal_mode: str = "auto",
         preserve_original: bool = True,
         alpha_output_format: str = "png",
-        matting_quality: str = "balanced",
     ) -> str:
         """
         Generate multiple images from a list of prompts efficiently.
@@ -202,11 +195,10 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
             response_modalities: Response types (TEXT, IMAGE)
             thinking_level: Thinking level - "minimal" or "high"
             transparent_background: Set True to get ready-to-use transparent
-                PNG/WebP cut-outs for EVERY prompt — great for batches of icons,
-                logos, stickers, or product shots. It just works; the alpha file
-                for each image is returned as "transparent_path". Tune edges with
-                matting_quality ("fast"/"balanced"/"best") and pick the alpha
-                format with alpha_output_format ("png"/"webp").
+                PNG/WebP cut-outs for EVERY prompt via the two-pass difference
+                matte (each prompt costs a second edit-to-black model call). The
+                alpha file for each image is returned as "transparent_path"; pick
+                the alpha format with alpha_output_format ("png"/"webp").
 
         Returns:
             JSON string with batch results including individual image paths
@@ -244,10 +236,8 @@ def register_batch_generate_tool(mcp_server: Any) -> None:
                 response_modalities=response_modalities,
                 thinking_level=thinking_level,
                 transparent_background=transparent_background,
-                background_removal_mode=background_removal_mode,
                 preserve_original=preserve_original,
                 alpha_output_format=alpha_output_format,
-                matting_quality=matting_quality,
             )
 
             return json.dumps(result, indent=2)

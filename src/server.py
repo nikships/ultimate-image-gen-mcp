@@ -13,7 +13,11 @@ from fastmcp import FastMCP
 
 from .config import ALL_MODELS, get_settings
 from .prompts import register_image_prompts
-from .tools import register_batch_generate_tool, register_generate_image_tool
+from .tools import (
+    register_batch_generate_tool,
+    register_generate_app_icon_tool,
+    register_generate_image_tool,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,6 +50,7 @@ def create_app() -> FastMCP:
 
         register_generate_image_tool(mcp)
         register_batch_generate_tool(mcp)
+        register_generate_app_icon_tool(mcp)
         register_image_prompts(mcp)
 
         logger.info("Ultimate Gemini MCP Server initialized successfully")

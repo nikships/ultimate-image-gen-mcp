@@ -18,19 +18,18 @@ from ..core import (
     coerce_image_paths,
     validate_alpha_output_format,
     validate_aspect_ratio,
-    validate_background_removal_mode,
     validate_image_format,
     validate_image_size,
-    validate_matting_quality,
     validate_prompt,
     validate_reference_image,
     validate_reference_images_count,
 )
 from ..services import ImageService
-from ..services.background_removal import (
-    build_chromakey_prompt,
-    remove_background_from_base64,
-    save_transparent_image,
+from ..services.background_removal import save_transparent_image
+from ..services.difference_matting import (
+    build_to_black_edit_prompt,
+    build_white_background_prompt,
+    extract_alpha_from_base64,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,10 +58,8 @@ async def generate_image_tool(
     thinking_level: str = "minimal",
     save_to_disk: bool = True,
     transparent_background: bool = False,
-    background_removal_mode: str = "auto",
     preserve_original: bool = True,
     alpha_output_format: str = "png",
-    matting_quality: str = "balanced",
     **kwargs: Any,
 ) -> dict[str, Any]:
     """
@@ -81,15 +78,13 @@ async def generate_image_tool(
         response_modalities: Response types (TEXT, IMAGE - default: both)
         thinking_level: Thinking level - "minimal" or "high" (default: minimal)
         save_to_disk: Save images to output directory
-        transparent_background: Produce a transparent-background copy via
-            post-processing. Gemini cannot emit alpha directly, so the image is
-            generated on a chromakey-green background and the green is removed
-            afterwards (see services/background_removal.py).
-        background_removal_mode: Removal strategy ("auto"/"chroma" supported).
-        preserve_original: Keep the original (green-background) image on disk in
+        transparent_background: Produce a transparent-background copy via a
+            two-pass difference matte. Gemini cannot emit alpha directly, so the
+            subject is generated on white, edited to black, and the two frames
+            are combined to recover true alpha (see services/difference_matting.py).
+        preserve_original: Keep the pass-1 (white-background) image on disk in
             addition to the transparent output (default: True).
         alpha_output_format: Format for the transparent output ("png" or "webp").
-        matting_quality: Edge cleanup aggressiveness ("fast", "balanced", "best").
 
     Returns:
         Dict with generated images and metadata
@@ -104,9 +99,7 @@ async def generate_image_tool(
 
     # Validate transparent-background options up front (fail fast).
     if transparent_background:
-        background_removal_mode = validate_background_removal_mode(background_removal_mode)
         alpha_output_format = validate_alpha_output_format(alpha_output_format)
-        matting_quality = validate_matting_quality(matting_quality)
 
     # Validate reference images count if provided
     if reference_image_paths:
@@ -151,9 +144,10 @@ async def generate_image_tool(
 
     params["thinking_level"] = thinking_level
 
-    # For transparent output, render on a chromakey-green background and skip
-    # prompt enhancement so the chromakey instructions reach the model intact.
-    generation_prompt = build_chromakey_prompt(prompt) if transparent_background else prompt
+    # For transparent output, run pass 1 of the two-pass difference matte:
+    # render the subject on a pure WHITE background. Skip prompt enhancement so
+    # the background instructions reach the model intact.
+    generation_prompt = build_white_background_prompt(prompt) if transparent_background else prompt
 
     results = await image_service.generate(
         prompt=generation_prompt,
@@ -180,15 +174,14 @@ async def generate_image_tool(
         response["metadata"].update(
             {
                 "transparent_background": True,
-                "background_removal_mode": "chroma",
-                "matting_quality": matting_quality,
+                "background_removal_mode": "difference_matte",
                 "alpha_output_format": alpha_output_format,
                 "preserve_original": preserve_original,
             }
         )
 
-    # Keep the original (green-background) image when not generating transparency,
-    # or when the caller explicitly asked to preserve it.
+    # Keep the original (white-background pass-1) image when not generating
+    # transparency, or when the caller explicitly asked to preserve it.
     save_original = save_to_disk and (preserve_original or not transparent_background)
 
     for result in results:
@@ -204,12 +197,13 @@ async def generate_image_tool(
             image_info["filename"] = file_path.name
 
         if transparent_background and save_to_disk:
-            _apply_transparent_background(
+            await _apply_transparent_background(
                 result=result,
                 image_info=image_info,
                 output_dir=settings.output_dir,
-                mode=background_removal_mode,
-                matting_quality=matting_quality,
+                image_service=image_service,
+                model=model,
+                generation_params=params,
                 alpha_output_format=alpha_output_format,
             )
         elif transparent_background:
@@ -229,50 +223,77 @@ async def generate_image_tool(
     return response
 
 
-def _apply_transparent_background(
+async def _apply_transparent_background(
     *,
     result: Any,
     image_info: dict[str, Any],
     output_dir: Any,
-    mode: str,
-    matting_quality: str,
+    image_service: ImageService,
+    model: str,
+    generation_params: dict[str, Any],
     alpha_output_format: str,
 ) -> None:
-    """Run background removal on a generated image and record the result.
+    """Run two-pass difference matting on a generated image and record results.
+
+    The pass-1 image (``result``, subject on white) is re-submitted to the model
+    with an "edit the background to black" instruction; the white and black
+    frames are then combined into a true-alpha cut-out via difference matting.
 
     Mutates ``image_info`` in place, adding ``transparent_path``,
-    ``background_removed``, ``background_removal_mode``, ``alpha_output_format``
-    and ``post_processing_warnings``. Failures are caught and surfaced as a
-    warning rather than aborting the whole generation.
+    ``background_removed``, ``background_removal_mode``, ``alpha_output_format``,
+    ``alignment_error``, ``aligned`` and ``post_processing_warnings``. Per the
+    warn-but-return contract the matte is kept even when the passes disagree;
+    only a hard failure (no pass-2 image, decode error) is caught and surfaced
+    as a warning rather than aborting generation.
     """
     from uuid import uuid4
 
     try:
-        removal = remove_background_from_base64(
-            result.image_data,
-            mode=mode,
-            matting_quality=matting_quality,
+        # Pass 2: edit the white-background image to a black background. Feed the
+        # pass-1 image back as a reference and reuse the same aspect/size so the
+        # frames line up. No prompt enhancement (the edit text must reach the
+        # model verbatim) and no search tools.
+        edit_params = {
+            k: v
+            for k, v in generation_params.items()
+            if k in ("aspect_ratio", "image_size", "output_format")
+        }
+        black_results = await image_service.generate(
+            prompt=build_to_black_edit_prompt(),
+            model=model,
+            enhance_prompt=False,
+            reference_images=[result.image_data],
+            response_modalities=["IMAGE"],
+            thinking_level=generation_params.get("thinking_level", "minimal"),
+            **edit_params,
         )
+        if not black_results:
+            raise RuntimeError("edit-to-black pass returned no image")
+
+        matte = extract_alpha_from_base64(result.image_data, black_results[0].image_data)
+
         base_stem = (
             str(image_info["filename"]).rsplit(".", 1)[0]
             if "filename" in image_info
             else f"transparent-{uuid4().hex[:8]}"
         )
         transparent_path = save_transparent_image(
-            removal.image,
+            matte.image,
             Path(output_dir) / f"{base_stem}-transparent.{alpha_output_format}",
             alpha_output_format,
         )
         image_info["transparent_path"] = str(transparent_path)
-        image_info["background_removed"] = removal.background_removed
-        image_info["background_removal_mode"] = removal.mode
+        image_info["background_removed"] = matte.transparent_ratio > 0
+        image_info["background_removal_mode"] = "difference_matte"
         image_info["alpha_output_format"] = alpha_output_format
-        image_info["post_processing_warnings"] = removal.warnings
+        image_info["alignment_error"] = round(matte.alignment_error, 4)
+        image_info["aligned"] = matte.aligned
+        image_info["post_processing_warnings"] = matte.warnings
     except Exception as e:
         # Best-effort: a post-processing failure must never abort generation.
         logger.warning(f"Transparent-background post-processing failed: {e}")
         image_info["background_removed"] = False
-        image_info["post_processing_warnings"] = [f"Background removal failed: {e}"]
+        image_info["post_processing_warnings"] = [f"Difference matting failed: {e}"]
 
     return None
 
@@ -292,10 +313,8 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         response_modalities: list[str] | None = None,
         thinking_level: str = "minimal",
         transparent_background: bool = False,
-        background_removal_mode: str = "auto",
         preserve_original: bool = True,
         alpha_output_format: str = "png",
-        matting_quality: str = "balanced",
     ) -> str:
         """
         ═══════════════════════════════════════════════════════════════════════════════
@@ -308,12 +327,12 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         🌟 KEY CAPABILITIES:
         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         ✓ High-Resolution Output: 512px, 1K, 2K, 4K
-        ✓ Advanced Text Rendering: Legible text in logos, diagrams, menus
+        ✓ Advanced Text Rendering: Legible text in infographics, diagrams, menus
         ✓ Reference Images: Up to 14 images (10 objects, 4 characters)
         ✓ Grounding: Google Web Search & Image Search
         ✓ Thinking Mode: Configurable reasoning (minimal or high)
         ✓ Transparent Backgrounds: one flag → ready-to-use alpha PNG/WebP
-          cut-outs (icons, logos, stickers). See below — it just works.
+          cut-outs. See below — it just works.
         ✓ SynthID Watermarking: Invisible watermark on all images
 
 
@@ -386,45 +405,30 @@ def register_generate_image_tool(mcp_server: Any) -> None:
         ready-to-use transparent PNG/WebP with a real alpha channel — no extra
         tools, no manual masking, no follow-up steps. Use it directly.
 
-        Behind the scenes the subject is rendered on a pure chromakey-green
-        plate and the green is keyed out in HSV color space (the same proven
-        technique pro sticker/asset pipelines use — deterministic, fast, Pillow-
-        only, zero ML downloads). You don't prompt for transparency; you just
-        ask for it and the cut-out comes back clean.
-
-        🎯 PERFECT FOR (reach for it by default on these):
-          • App icons & macOS squircles  • Logos & wordmarks
-          • Stickers & emoji             • UI / product cut-outs
-          • Badges, mascots, overlays    • Anything you'll composite later
-
-        🍏 APP ICONS: prompt for the full squircle tile (rounded corners running
-        to the canvas edges) and the pipeline keys out ONLY the area outside the
-        rounded shape — giving you exactly the floating-rounded-tile alpha a
-        .icns/.iconset needs. This is the right tool for app-icon work; don't
-        hand-mask it yourself.
+        Behind the scenes this uses a TWO-PASS DIFFERENCE MATTE: the subject is
+        rendered once on a pure WHITE background, then that image is edited to a
+        pure BLACK background, and the two frames are combined to recover a true
+        (fractional) alpha channel. This costs a second model call (≈2x
+        tokens/latency) but gives materially better edges than color-keying —
+        clean soft edges, glow, glass, and shadows, with no green halo. You
+        don't prompt for transparency; you just ask for it.
 
         ► transparent_background (bool, default: False):
           Flip to True to get the transparent cut-out. That's the whole API.
-
-        ► matting_quality (str, default: "balanced"):
-          Edge crispness: "fast", "balanced", or "best". Bump to "best" for
-          icons/logos where you want the tightest edge.
 
         ► alpha_output_format (str, default: "png"):
           Alpha output format: "png" (default) or "webp".
 
         ► preserve_original (bool, default: True):
-          Also keeps the pre-key plate next to the cut-out; set False for just
-          the transparent file.
-
-        ► background_removal_mode (str, default: "auto"):
-          Leave as "auto" (chromakey HSV pipeline).
+          Also keeps the pass-1 (white-background) image next to the cut-out;
+          set False for just the transparent file.
 
         Each image returns transparent_path (your alpha file) plus
-        background_removed / post_processing_warnings so you can confirm the cut
-        succeeded. It nails crisp-edged subjects (icons, logos, products); very
-        wispy hair/fur, glass, or smoke are the only hard cases — for those,
-        push matting_quality="best".
+        background_removed, aligned, alignment_error and
+        post_processing_warnings so you can confirm the cut succeeded. It nails
+        crisp-edged subjects and soft glow/glass; the one failure mode is the
+        edit pass drifting the subject (flagged via aligned=false) — regenerate
+        if the edges look ghosted.
 
 
         📤 RESPONSE FORMAT:
@@ -454,9 +458,9 @@ def register_generate_image_tool(mcp_server: Any) -> None:
            - Linux: `xdg-open "/path/to/image.png"`
            - Windows: `start "" "/path/to/image.png"`
 
-        💡 Need a transparent icon/logo/sticker/cut-out? Don't hand-mask or reach
-        for another tool — just call this tool with transparent_background=True
-        and use the returned transparent_path. It's built for exactly that.
+        💡 Need a transparent cut-out? Don't hand-mask or reach for another
+        tool — just call this tool with transparent_background=True and use the
+        returned transparent_path. It's built for exactly that.
         """
         try:
             result = await generate_image_tool(
@@ -470,10 +474,8 @@ def register_generate_image_tool(mcp_server: Any) -> None:
                 response_modalities=response_modalities,
                 thinking_level=thinking_level,
                 transparent_background=transparent_background,
-                background_removal_mode=background_removal_mode,
                 preserve_original=preserve_original,
                 alpha_output_format=alpha_output_format,
-                matting_quality=matting_quality,
             )
 
             return json.dumps(result, indent=2)

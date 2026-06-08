@@ -14,7 +14,7 @@ that runs *after* generation. The default (and currently only) strategy is a
 2. The green background is detected in **HSV** colour space (which separates
    hue from saturation/brightness) and removed, keying on a tight hue band that
    is *also* highly saturated and bright. This preserves subject greens such as
-   logo or foliage greens, which are less saturated / darker than the
+   foliage or other natural greens, which are less saturated / darker than the
    chromakey.
 3. The resulting matte is grown by a few pixels (morphological dilation) to
    swallow the anti-aliased green halo around the subject edges.
@@ -99,7 +99,7 @@ def build_chromakey_prompt(prompt: str) -> str:
     halo, bezel or frame** around the subject. Anti-aliased green fringing is
     handled by the post-processing dilation step, so we no longer ask the model
     to bake in a white outline — that instruction was being interpreted as a
-    visible chrome/metallic ring around app icons and badged subjects.
+    visible chrome/metallic ring around the subject.
 
     Args:
         prompt: The original user prompt describing the subject.
@@ -125,8 +125,8 @@ def build_chromakey_prompt(prompt: str) -> str:
         "green. If green is needed, use a clearly different shade such as dark "
         "forest green or teal.\n"
         "4. PLACEMENT: Center the subject unless the user prompt explicitly "
-        "asks for full-bleed framing (e.g. an app-icon squircle whose rounded "
-        "corners touch the canvas edges)."
+        "asks for full-bleed framing (e.g. a shape whose edges touch the "
+        "canvas edges)."
     )
 
 
@@ -144,7 +144,7 @@ def remove_green_screen(
     A pixel is treated as background when its hue is within ``hue_tolerance`` of
     ``hue_center`` *and* it is highly saturated (``>= min_saturation``) *and*
     bright (``>= min_value``). The combined gate is what lets subject greens
-    (logos, foliage), which are typically less saturated or darker, survive.
+    (foliage, natural greens), which are typically less saturated or darker, survive.
 
     Args:
         image: The source image (any mode; converted to RGB internally).

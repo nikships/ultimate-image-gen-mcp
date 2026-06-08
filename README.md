@@ -17,13 +17,14 @@
 - **Google Search Grounding**: Real-time data (weather, stocks, events, maps)
 - **Google Image Search**: Visual context from web images — the model can FIND real images of anything
 - **Thinking Mode**: Configurable reasoning - "minimal" (fast) or "high" (best quality)
-- **Transparent Backgrounds**: Flip one flag → ready-to-use transparent PNG/WebP cut-outs with a real alpha channel. Perfect for app icons, logos, stickers, and product shots; powered by a deterministic chromakey pipeline (Pillow only — no extra dependencies)
+- **Transparent Backgrounds**: Flip one flag → ready-to-use transparent PNG/WebP cut-outs with a real alpha channel, recovered by a two-pass difference matte (generate on white → edit to black → solve for alpha). True soft edges/glow/glass, no color halo. Pillow only — no extra dependencies. Costs a second model call (~2x).
+- **Dedicated App-Icon / Logo Tool**: `generate_app_icon` forces a square, transparent, 1024px PNG every time — no way to get a non-square or opaque-background icon
 
 > **This model is different.** Unlike traditional image generators that rely solely on training data, Gemini 3.1 Flash has live access to Google Search and Image Search. It can find actual references for products, people, events, or anything that exists online. "Way of Wade 12" → generates the REAL shoe. "Tony Hawk" → finds real photos. Don't over-prompt — let the model cook.
 
 ### Server Features
 - **Batch Processing**: Generate multiple images in parallel (up to 8 concurrent)
-- **28 Expert Prompt Templates**: MCP slash commands for photography, logos, app icons, cinematics, storyboards, and more
+- **26 Expert Prompt Templates**: MCP slash commands for photography, cinematics, storyboards, and more
 - **Flexible Aspect Ratios**: 14 options — 1:1, 1:4, 1:8, 2:3, 3:2, 3:4, 4:1, 4:3, 4:5, 5:4, 8:1, 9:16, 16:9, 21:9
 - **Configurable via Environment Variables**: Output directory, default size, timeouts, and more
 
@@ -176,11 +177,9 @@ Generate an image with Gemini 3.1 Flash Image.
 | `enable_image_search` | bool | `false` | **USE THIS** for visual references. The model finds actual images to work from. This is huge — it can reference real photos of anyone/anything. |
 | `thinking_level` | string | `minimal` | `minimal` (fast) or `high` (best quality) |
 | `response_modalities` | list | `["TEXT","IMAGE"]` | `["TEXT","IMAGE"]`, `["IMAGE"]`, or `["TEXT"]` |
-| `transparent_background` | bool | `false` | Produce a transparent PNG/WebP cut-out via post-processing (see below) |
-| `background_removal_mode` | string | `auto` | `auto`/`chroma` (chromakey HSV pipeline). `local`/`external` reserved for future ML modes |
-| `preserve_original` | bool | `true` | Also keep the original green-background image, not just the cut-out |
+| `transparent_background` | bool | `false` | Produce a transparent PNG/WebP cut-out via the two-pass difference matte (~2x cost; see below) |
+| `preserve_original` | bool | `true` | Also keep the pass-1 (white-background) image, not just the cut-out |
 | `alpha_output_format` | string | `png` | Alpha-capable output format: `png` or `webp` |
-| `matting_quality` | string | `balanced` | Edge-cleanup aggressiveness: `fast`, `balanced`, or `best` |
 
 **Image size guide:**
 - `512px` — fastest, lowest cost (0.5K)
@@ -190,29 +189,61 @@ Generate an image with Gemini 3.1 Flash Image.
 
 #### Transparent backgrounds — set one flag, get a real alpha cut-out
 
-**Just set `transparent_background=true`.** You get back a ready-to-use transparent PNG/WebP (real alpha channel) at `transparent_path` — no manual masking, no second tool, no follow-up steps. Reach for it by default whenever you need an **app icon, logo, sticker, badge, mascot, UI element, or product cut-out**.
+**Just set `transparent_background=true`.** You get back a ready-to-use transparent PNG/WebP (real alpha channel) at `transparent_path` — no manual masking, no second tool, no follow-up steps.
 
-Under the hood the subject is rendered on a pure chromakey-green (`#00FF00`) plate with crisp opaque edges (and **no** baked-in outline, halo, or bezel), then the green is keyed out in HSV colour space and saved with alpha. It's the same deterministic chromakey technique pro sticker/asset pipelines use (inspired by [Phil Schmid's transparent-sticker guide](https://www.philschmid.de/generate-stickers)) — fast, predictable, Pillow-only, zero ML downloads.
+> Generating an **app icon or logo**? Use the dedicated [`generate_app_icon`](#generate_app_icon) tool instead — it forces square + transparent + 1024px PNG so the icon constraints can't be set wrong.
 
-**App icons / macOS squircles:** prompt for the full squircle tile (rounded corners reaching the canvas edges) and the pipeline keys out only the area *outside* the rounded shape — exactly the floating-rounded-tile alpha an `.icns`/`.iconset` needs. Use this instead of hand-masking. Bump `matting_quality="best"` for the tightest icon/logo edges.
+Under the hood this is a **two-pass difference matte**. The subject is rendered once on a pure white (`#FFFFFF`) background, that image is edited to a pure black (`#000000`) background, and the two frames are combined to solve for alpha per pixel: since `obs_white − obs_black = (1−α)·255` on every channel, `α = 1 − mean(obs_white − obs_black)/255`, and the foreground colour is un-premultiplied from the black frame. Because there's no colour key, there's no green spill/halo; alpha is fractional, so soft edges, glow, glass, and faint shadows all survive. Pillow-only, zero ML downloads — but it costs a **second model call** (~2x tokens/latency).
 
-Each returned image gains: `transparent_path`, `background_removed`, `background_removal_mode`, `alpha_output_format`, and `post_processing_warnings`. By default the original is preserved alongside the cut-out (`preserve_original=true`).
+The technique assumes the edit pass changed *only* the background. If the model drifts the subject between passes, the matte degrades — the result still returns (`aligned`/`alignment_error` flag it, with a loud `post_processing_warnings` entry) so you can decide whether to regenerate.
+
+Each returned image gains: `transparent_path`, `background_removed`, `background_removal_mode` (`"difference_matte"`), `aligned`, `alignment_error`, `alpha_output_format`, and `post_processing_warnings`. By default the pass-1 (white-background) original is preserved alongside the cut-out (`preserve_original=true`).
 
 ```jsonc
 // generate_image(prompt="a friendly robot mascot", transparent_background=true)
 {
   "images": [{
-    "path": "/path/to/a-friendly-robot-mascot-...png",            // original (green bg)
+    "path": "/path/to/a-friendly-robot-mascot-...png",            // pass-1 (white bg)
     "transparent_path": "/path/to/a-friendly-robot-mascot-...-transparent.png",
     "background_removed": true,
-    "background_removal_mode": "chroma",
+    "background_removal_mode": "difference_matte",
+    "aligned": true,
+    "alignment_error": 0.004,
     "alpha_output_format": "png",
     "post_processing_warnings": []
   }]
 }
 ```
 
-It nails crisp-edged subjects (icons, logos, badges, products, stickers, overlays). The only hard cases are very wispy hair/fur, glass, and smoke — for those, set `matting_quality="best"`.
+It nails crisp-edged subjects and soft glow/glass. The one failure mode is the edit pass drifting the subject (flagged via `aligned: false`) — regenerate if edges look ghosted.
+
+---
+
+### `generate_app_icon`
+
+Purpose-built for **app icons and logos**. Square, transparent, and 1024px are **forced** — there is no `aspect_ratio`, `image_size`, `output_format`, or `transparent_background` knob to get wrong. Every result is a real alpha-channel PNG at `transparent_path`, ready to drop into a `.iconset` directory and convert with `iconutil -c icns`.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `prompt` | string | required | Describe the icon/logo mark only — framing & transparency are handled |
+| `reference_image_paths` | str \| list | `null` | Brand/style reference image path(s), up to 14 |
+| `enable_google_search` | bool | `false` | Ground design in real web references |
+| `enable_image_search` | bool | `false` | Use Google Image Search for visual context |
+| `thinking_level` | string | `high` | `minimal` or `high` (icons reward `high`) |
+| `allow_icon_words_in_prompt` | bool | `false` | Escape hatch — bypass the prompt guard only when a word like "logo" is genuinely part of the subject |
+
+> **The `prompt` must describe ONLY the subject, never the deliverable.** This tool already turns whatever you describe *into* an icon, so framing words like "app icon", "logo", "favicon", or "squircle" in the prompt are rejected (set `allow_icon_words_in_prompt=true` only if such a word is literally part of the depicted subject). Right: `"a glowing electric-blue magnifying glass over a network graph"`. Wrong: `"an app icon of a magnifying glass"`.
+
+```jsonc
+// generate_app_icon(prompt="a glowing electric-blue magnifying glass over a network graph")
+{
+  "images": [{
+    "transparent_path": "/path/to/...-transparent.png",  // square, 1024px, alpha
+    "background_removed": true,
+    "alpha_output_format": "png"
+  }]
+}
+```
 
 ---
 
@@ -230,22 +261,19 @@ Generate multiple images in parallel.
 | `batch_size` | int | `8` | Max concurrent requests |
 | `enable_image_search` | bool | `false` | Use Google Image Search for visual context |
 | `thinking_level` | string | `minimal` | `minimal` or `high` |
-| `transparent_background` | bool | `false` | Apply chromakey transparency to every image in the batch |
-| `background_removal_mode` | string | `auto` | `auto`/`chroma` (see `generate_image`) |
-| `preserve_original` | bool | `true` | Keep the original green-background images too |
+| `transparent_background` | bool | `false` | Apply the two-pass difference matte to every image (each costs a second model call) |
+| `preserve_original` | bool | `true` | Keep the pass-1 (white-background) images too |
 | `alpha_output_format` | string | `png` | Transparent output format: `png` or `webp` |
-| `matting_quality` | string | `balanced` | Edge-cleanup aggressiveness: `fast`, `balanced`, `best` |
 
 ---
 
 ## MCP Prompt Templates
 
-28 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`. The `app_icon` template pairs with `transparent_background` to produce clean, platform-aware icon cut-outs.
+26 expert prompt templates are available as MCP slash commands in Claude Code (type `/` to browse). Each template returns a crafted prompt and recommended parameters ready to pass directly to `generate_image` or `batch_generate`. For app icons and logos, use the dedicated [`generate_app_icon`](#generate_app_icon) tool instead.
 
 | Command | Description | Default aspect ratio |
 |---------|-------------|----------------------|
 | `photography_shot` | Photorealistic shot with lens/lighting specs | 16:9 |
-| `logo_design` | Professional brand identity | 1:1, 4K, IMAGE only |
 | `cinematic_scene` | Film still with cinematography language | 21:9 |
 | `product_mockup` | Commercial e-commerce photography | 1:1 or 4:5 |
 | `batch_storyboard` | Multi-scene storyboard → calls `batch_generate` | 16:9 |

@@ -50,19 +50,10 @@ RESPONSE_MODALITIES = ["TEXT", "IMAGE"]
 
 # --- Transparent-background (post-processing) options ------------------------
 # Gemini cannot emit true alpha directly, so transparency is implemented as a
-# post-processing step. "chroma" uses a chromakey-green + HSV removal pipeline
-# (pillow only). "local"/"external" are reserved for future ML/provider modes.
-BACKGROUND_REMOVAL_MODES = ["auto", "chroma", "local", "external"]
-SUPPORTED_BACKGROUND_REMOVAL_MODES = ["auto", "chroma"]
-DEFAULT_BACKGROUND_REMOVAL_MODE = "auto"
-
+# post-processing step via the two-pass difference matte.
 # Formats that support an alpha channel for transparent output.
 ALPHA_OUTPUT_FORMATS = ["png", "webp"]
 DEFAULT_ALPHA_OUTPUT_FORMAT = "png"
-
-# Matting quality presets (control edge-fringe dilation aggressiveness).
-MATTING_QUALITY_LEVELS = ["fast", "balanced", "best"]
-DEFAULT_MATTING_QUALITY = "balanced"
 
 THINKING_LEVELS = ["minimal", "high"]
 DEFAULT_THINKING_LEVEL = "minimal"
