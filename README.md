@@ -4,6 +4,29 @@
 
 > MCP server for Google's **Gemini 3.1 Flash Image** — fast image generation with advanced reasoning, 512px–4K resolution, up to 14 reference images, Google Search grounding, and automatic thinking mode.
 
+---
+
+## Setup
+
+### Claude Desktop
+
+Add to your mcp config (mcp.json / .claude.json):
+
+```json
+{
+  "mcpServers": {
+    "ultimate-gemini": {
+      "command": "uvx",
+      "args": ["ultimate-gemini-mcp@latest"],
+      "env": {
+        "GEMINI_API_KEY": "your-api-key-here"
+      }
+    }
+  }
+}
+```
+
+
 **All generated images include invisible SynthID watermarks for authenticity and provenance tracking.**
 
 ---
@@ -102,27 +125,6 @@ cd ultimate-image-gen-mcp
 uv sync
 ```
 
----
-
-## Setup
-
-### Claude Desktop
-
-Add to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "ultimate-gemini": {
-      "command": "uvx",
-      "args": ["ultimate-gemini-mcp@latest"],
-      "env": {
-        "GEMINI_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
 
 Config file locations:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
