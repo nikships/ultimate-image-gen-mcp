@@ -1,0 +1,91 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.nikships/ultimate-image-gen-mcp",
+  "title": "Ultimate Gemini MCP",
+  "description": "Image generation with Google Gemini 3.1 Flash: 512px-4K, reference images, search grounding",
+  "repository": {
+    "url": "https://github.com/nikships/ultimate-image-gen-mcp",
+    "source": "github",
+    "id": "1083341252"
+  },
+  "websiteUrl": "https://github.com/nikships/ultimate-image-gen-mcp",
+  "version": "6.0.21",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "ultimate-gemini-mcp",
+      "version": "6.0.21",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "description": "Google Gemini API key (free tier at https://aistudio.google.com/apikey). Also accepts GOOGLE_API_KEY.",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true,
+          "name": "GEMINI_API_KEY"
+        },
+        {
+          "description": "Directory where generated images are saved",
+          "isRequired": false,
+          "format": "filepath",
+          "default": "~/gemini_images",
+          "name": "OUTPUT_DIR"
+        },
+        {
+          "description": "Default resolution for generated images",
+          "isRequired": false,
+          "format": "string",
+          "choices": ["512px", "1K", "2K", "4K"],
+          "default": "2K",
+          "name": "DEFAULT_IMAGE_SIZE"
+        },
+        {
+          "description": "Default Gemini image model",
+          "isRequired": false,
+          "format": "string",
+          "default": "gemini-3.1-flash-image-preview",
+          "name": "DEFAULT_MODEL"
+        },
+        {
+          "description": "Automatically enhance prompts with Gemini Flash before generation",
+          "isRequired": false,
+          "format": "boolean",
+          "default": "false",
+          "name": "ENABLE_PROMPT_ENHANCEMENT"
+        },
+        {
+          "description": "Enable Google Search grounding by default (real-time data like weather, events)",
+          "isRequired": false,
+          "format": "boolean",
+          "default": "false",
+          "name": "ENABLE_GOOGLE_SEARCH"
+        },
+        {
+          "description": "API request timeout in seconds",
+          "isRequired": false,
+          "format": "number",
+          "default": "60",
+          "name": "REQUEST_TIMEOUT"
+        },
+        {
+          "description": "Max parallel requests in batch mode",
+          "isRequired": false,
+          "format": "number",
+          "default": "8",
+          "name": "MAX_BATCH_SIZE"
+        },
+        {
+          "description": "Logging level",
+          "isRequired": false,
+          "format": "string",
+          "choices": ["DEBUG", "INFO", "WARNING", "ERROR"],
+          "default": "INFO",
+          "name": "LOG_LEVEL"
+        }
+      ]
+    }
+  ]
+}

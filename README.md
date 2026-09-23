@@ -342,6 +342,10 @@ Find it with: `which uvx`
 
 MIT — see [LICENSE](LICENSE) for details.
 
+## MCP Registry
+
+`mcp-name: io.github.nikships/ultimate-image-gen-mcp`
+
 ## Links
 
 - [Google AI Studio](https://makersuite.google.com/app/apikey) — Get your API key
